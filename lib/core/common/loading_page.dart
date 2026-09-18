@@ -2,6 +2,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 
 class LoadingPage extends StatefulWidget {
   const LoadingPage({super.key});
@@ -42,6 +43,11 @@ class _LoadingPageState extends State<LoadingPage> {
                     width: width * 0.4,
                   ),
                 ),
+                // Lottie.asset(
+                //   'assets/animations/logoAnim.json',
+                //   width: width * 0.6,
+                //   height: height * 0.6,
+                // ),
                 SizedBox(height: 10.h),
                 ZoomIn(
                   delay: Duration(milliseconds: 700),

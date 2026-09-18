@@ -24,5 +24,10 @@ final GoRouter router = GoRouter(
       name: 'mainNavBar',
       builder: (context, state) => const MainNavBar(),
     ),
+    GoRoute(
+      path: '/productsPage',
+      name: 'productsPage',
+      builder: (context, state) => const ProductsPage(),
+    ),
   ],
 );

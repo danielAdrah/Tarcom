@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/constants/colors.dart';
 import 'features/home/presentation/pages/home_page.dart';
+import 'features/products/presentation/pages/products_page.dart';
 
 class MainNavBar extends StatefulWidget {
   const MainNavBar({super.key});
@@ -15,7 +16,7 @@ class _MainNavBarState extends State<MainNavBar> {
 
   final List<Widget> _screens = const [
     HomePage(),
-    _PlaceholderScreen(title: 'المنتجات'),
+    ProductsPage(),
     _PlaceholderScreen(title: 'المفضلة'),
     _PlaceholderScreen(title: 'الملف الشخصي'),
   ];

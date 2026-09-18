@@ -128,6 +128,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+
             //search section
             SliverToBoxAdapter(
               child: Padding(
@@ -215,22 +216,22 @@ class _HomePageState extends State<HomePage> {
                       CategoryLabel(
                         onTap: () {},
                         label: 'بطاريات',
-                        img: 'assets/img/laptop.png',
+                        img: 'assets/img/battery.png',
                       ),
                       CategoryLabel(
                         onTap: () {},
                         label: 'ألواح شمسية',
-                        img: 'assets/img/laptop.png',
+                        img: 'assets/img/solar-system.png',
                       ),
                       CategoryLabel(
                         onTap: () {},
-                        label: 'إكسسوارات',
-                        img: 'assets/img/laptop.png',
+                        label: 'أكبال',
+                        img: 'assets/img/usb-connector.png',
                       ),
                       CategoryLabel(
                         onTap: () {},
                         label: 'المزيد',
-                        img: 'assets/img/laptop.png',
+                        img: 'assets/img/menu.png',
                       ),
                     ],
                   ),
@@ -314,7 +315,7 @@ class _HomePageState extends State<HomePage> {
                 itemBuilder: (context, index) {
                   final category = categories[index];
                   return FadeInUp(
-                    delay: Duration(milliseconds: 1000),
+                    delay: Duration(milliseconds: 900),
                     child: FeaturedProCard(
                       category: category,
                       textTheme: textTheme,
