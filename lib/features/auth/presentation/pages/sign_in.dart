@@ -115,7 +115,7 @@ class _SignInPageState extends State<SignInPage> {
                   delay: Duration(milliseconds: 1200),
                   child: ElevatedButton(
                     onPressed: () {
-                      // Handle sign-up logic here
+                      context.pushNamed('mainNavBar');
                     },
                     child: Text('تسجيل الدخول'),
                   ),

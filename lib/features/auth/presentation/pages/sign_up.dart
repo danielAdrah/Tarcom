@@ -163,7 +163,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   delay: Duration(milliseconds: 1500),
                   child: ElevatedButton(
                     onPressed: () {
-                      // Handle sign-up logic here
+                      context.pushNamed('mainNavBar');
                     },
                     child: Text('إنشاء حساب'),
                   ),

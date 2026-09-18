@@ -40,7 +40,7 @@ class AppColors {
   // ---------------------------------------------------------------------------
 
   static const Color white = Color(0xFFFFFFFF);
-  static const Color background = Color(0xFFF7F9FC);
+  static const Color background = Color(0xffe5f2fd);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF1F4F8);
 

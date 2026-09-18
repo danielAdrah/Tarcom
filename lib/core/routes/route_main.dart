@@ -1,9 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../features/auth/presentation/pages/sign_in.dart';
-import '../../features/auth/presentation/pages/sign_up.dart';
-import '../common/loading_page.dart';
+import 'route_imports.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
@@ -18,6 +13,16 @@ final GoRouter router = GoRouter(
       path: '/signInPage',
       name: 'signInPage',
       builder: (context, state) => const SignInPage(),
+    ),
+    GoRoute(
+      path: '/homePage',
+      name: 'homePage',
+      builder: (context, state) => const HomePage(),
+    ),
+    GoRoute(
+      path: '/mainNavBar',
+      name: 'mainNavBar',
+      builder: (context, state) => const MainNavBar(),
     ),
   ],
 );
