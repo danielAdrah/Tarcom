@@ -5,4 +5,6 @@ export '../../features/auth/presentation/pages/sign_up.dart';
 export '../common/loading_page.dart';
 export '../../features/home/presentation/pages/home_page.dart';
 export '../../main_navbar.dart';
+export '../../features/products/presentation/pages/products_category_page.dart';
+export '../../features/products/presentation/pages/product_details_page.dart';
 export '../../features/products/presentation/pages/products_page.dart';

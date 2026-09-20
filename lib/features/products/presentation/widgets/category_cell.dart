@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/colors.dart';
-import '../pages/products_page.dart';
+import '../pages/products_category_page.dart';
 
 class CategoryCell extends StatelessWidget {
   const CategoryCell({required this.category, this.onTap, super.key});
