@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/constants/colors.dart';
+import 'features/favorites/presentation/pages/favorites_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/products/presentation/pages/products_category_page.dart';
 
@@ -17,7 +18,7 @@ class _MainNavBarState extends State<MainNavBar> {
   final List<Widget> _screens = const [
     HomePage(),
     ProductsCategoryPage(),
-    _PlaceholderScreen(title: 'المفضلة'),
+    FavoritesPage(),
     _PlaceholderScreen(title: 'الملف الشخصي'),
   ];
 
