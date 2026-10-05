@@ -42,6 +42,7 @@ class _ProductsCategoryPageState extends State<ProductsCategoryPage> {
       count: '15',
     ),
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,9 +90,13 @@ class _ProductsCategoryPageState extends State<ProductsCategoryPage> {
                     return CategoryCell(
                       onTap: () {
                         context.pushNamed(
-                          'productsPage',
+                          'productsCompanyPage',
                           extra: categories[index].title,
                         );
+                        // context.pushNamed(
+                        //   'productsPage',
+                        //   extra: categories[index].title,
+                        // );
                       },
                       category: categories[index],
                     );

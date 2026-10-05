@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'colors.dart';
 
 class AppTheme {
@@ -50,105 +49,105 @@ class AppTheme {
     textTheme: TextTheme(
       displayLarge: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 32.sp,
+        fontSize: 32,
         fontWeight: FontWeight.w700,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       displayMedium: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 28.sp,
+        fontSize: 28,
         fontWeight: FontWeight.w700,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       displaySmall: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 24.sp,
+        fontSize: 24,
         fontWeight: FontWeight.w700,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       headlineLarge: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 22.sp,
+        fontSize: 22,
         fontWeight: FontWeight.w700,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       headlineMedium: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 20.sp,
+        fontSize: 20,
         fontWeight: FontWeight.w600,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       headlineSmall: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 18.sp,
+        fontSize: 18,
         fontWeight: FontWeight.w600,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       titleLarge: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 18.sp,
+        fontSize: 18,
         fontWeight: FontWeight.w600,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       titleMedium: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 16.sp,
+        fontSize: 16,
         fontWeight: FontWeight.w600,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       titleSmall: TextStyle(
         color: AppColors.textSecondary,
-        fontSize: 14.sp,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       bodyLarge: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 16.sp,
+        fontSize: 16,
         fontWeight: FontWeight.w400,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       bodyMedium: TextStyle(
         color: AppColors.textSecondary,
-        fontSize: 14.sp,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       bodySmall: TextStyle(
         color: AppColors.textSecondary,
-        fontSize: 12.sp,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       labelLarge: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 14.sp,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       labelMedium: TextStyle(
         color: AppColors.textSecondary,
-        fontSize: 12.sp,
+        fontSize: 12,
         fontWeight: FontWeight.w500,
         fontFamily: 'IBMPlexSansArabic',
       ),
 
       labelSmall: TextStyle(
         color: AppColors.textSecondary,
-        fontSize: 11.sp,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
         fontFamily: 'IBMPlexSansArabic',
       ),
@@ -162,12 +161,10 @@ class AppTheme {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
         elevation: 0,
-        minimumSize: Size(double.infinity, 52.w),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+        minimumSize: Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: TextStyle(
-          fontSize: 15.sp,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           fontFamily: 'IBMPlexSansArabic',
         ),
@@ -181,12 +178,10 @@ class AppTheme {
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
-        minimumSize: Size(double.infinity, 52.w),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+        minimumSize: Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: TextStyle(
-          fontSize: 15.sp,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           fontFamily: 'IBMPlexSansArabic',
         ),
@@ -237,35 +232,35 @@ class AppTheme {
       filled: true,
       fillColor: AppColors.surface,
 
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.r, vertical: 15.r),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
 
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.border),
       ),
 
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.border),
       ),
 
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        borderSide: BorderSide(color: AppColors.primary, width: 1.5.w),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.primary, width: 1.5),
       ),
 
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error),
       ),
 
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        borderSide: BorderSide(color: AppColors.error, width: 1.5.w),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.error, width: 1.5),
       ),
-      hintStyle: TextStyle(color: AppColors.textDisabled, fontSize: 14.sp),
+      hintStyle: TextStyle(color: AppColors.textDisabled, fontSize: 14),
 
-      labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
+      labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 14),
 
       prefixIconColor: AppColors.textSecondary,
       suffixIconColor: AppColors.textSecondary,

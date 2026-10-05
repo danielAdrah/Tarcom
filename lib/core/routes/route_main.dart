@@ -40,7 +40,22 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/productDetailsPage',
       name: 'productDetailsPage',
-      builder: (context, state) => const ProductDetailsPage(),
+      builder: (context, state) {
+        final specifications = state.extra;
+        if (specifications is List<MapEntry<String, String>>) {
+          return ProductDetailsPage(specifications: specifications);
+        }
+        return const ProductDetailsPage();
+      },
+    ),
+    GoRoute(
+      path: '/productsCompanyPage',
+      name: 'productsCompanyPage',
+      builder: (context, state) {
+        final String catagoryTitle = state.extra as String;
+        return ProductsCompanyPage(catagoryTitle: catagoryTitle);
+      },
+      // => const ProductsCompanyPage(),
     ),
   ],
 );

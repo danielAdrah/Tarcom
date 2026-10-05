@@ -175,6 +175,7 @@ class _ProductsPageState extends State<ProductsPage> {
                           ],
                         ),
                       ),
+
                       SizedBox(height: 18.h),
 
                       //search field
@@ -298,6 +299,7 @@ class _ProductsPageState extends State<ProductsPage> {
                   ),
                 ),
               ),
+
               //the actuall list of the products.
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 28.h),
@@ -312,7 +314,17 @@ class _ProductsPageState extends State<ProductsPage> {
                     final product = _dummyProducts[index];
                     return ProductCell(
                       onTap: () {
-                        context.pushNamed('productDetailsPage');
+                        context.pushNamed(
+                          'productDetailsPage',
+                          extra: <MapEntry<String, String>>[
+                            MapEntry('السعة', '12V 100Ah'),
+                            MapEntry('النوع', 'AGM'),
+                            MapEntry('النوع', 'AGM'),
+                            MapEntry('النوع', 'AGM'),
+                            MapEntry('النوع', 'AGM'),
+                            MapEntry('النوع', 'AGM'),
+                          ],
+                        );
                       },
                       proTitle: product['title']!,
                       proDesc: product['description']!,

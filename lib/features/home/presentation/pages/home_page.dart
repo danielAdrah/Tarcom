@@ -1,7 +1,7 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/colors.dart';
 import '../widgets/category_label.dart';
 import '../widgets/featured_products_card.dart';
@@ -209,29 +209,54 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       // Category Item
                       CategoryLabel(
-                        onTap: () {},
+                        onTap: () {
+                          context.pushNamed(
+                            'productsCompanyPage',
+                            extra: 'لابتوبات',
+                          );
+                        },
                         label: 'لابتوبات',
                         img: 'assets/img/laptop.png',
                       ),
                       CategoryLabel(
-                        onTap: () {},
+                        onTap: () {
+                          context.pushNamed(
+                            'productsCompanyPage',
+                            extra: 'بطاريات',
+                          );
+                        },
                         label: 'بطاريات',
                         img: 'assets/img/battery.png',
                       ),
                       CategoryLabel(
-                        onTap: () {},
+                        onTap: () {
+                          context.pushNamed(
+                            'productsCompanyPage',
+                            extra: 'ألواح شمسية',
+                          );
+                        },
                         label: 'ألواح شمسية',
                         img: 'assets/img/solar-system.png',
                       ),
                       CategoryLabel(
-                        onTap: () {},
+                        onTap: () {
+                          context.pushNamed(
+                            'productsCompanyPage',
+                            extra: 'أكبال',
+                          );
+                        },
                         label: 'أكبال',
                         img: 'assets/img/usb-connector.png',
                       ),
                       CategoryLabel(
-                        onTap: () {},
-                        label: 'المزيد',
-                        img: 'assets/img/menu.png',
+                        onTap: () {
+                          context.pushNamed(
+                            'productsCompanyPage',
+                            extra: 'أدوات منزلية',
+                          );
+                        },
+                        label: 'أدوات منزلية',
+                        img: 'assets/img/home.png',
                       ),
                     ],
                   ),

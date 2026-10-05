@@ -8,3 +8,4 @@ export '../../main_navbar.dart';
 export '../../features/products/presentation/pages/products_category_page.dart';
 export '../../features/products/presentation/pages/product_details_page.dart';
 export '../../features/products/presentation/pages/products_page.dart';
+export '../../features/products/presentation/pages/products_company_page.dart';

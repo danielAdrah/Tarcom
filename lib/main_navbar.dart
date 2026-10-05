@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/constants/colors.dart';
+import 'features/contact-us/presentation/pages/contactUs_page.dart';
 import 'features/favorites/presentation/pages/favorites_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/products/presentation/pages/products_category_page.dart';
@@ -19,7 +20,7 @@ class _MainNavBarState extends State<MainNavBar> {
     HomePage(),
     ProductsCategoryPage(),
     FavoritesPage(),
-    _PlaceholderScreen(title: 'الملف الشخصي'),
+    ContactusPage(),
   ];
 
   @override
@@ -49,28 +50,11 @@ class _MainNavBarState extends State<MainNavBar> {
             label: 'المفضلة',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'الملف الشخصي',
+            icon: Icon(Icons.phone),
+            selectedIcon: Icon(Icons.phone),
+            label: 'تواصل معنا',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(title, style: Theme.of(context).textTheme.titleLarge),
       ),
     );
   }

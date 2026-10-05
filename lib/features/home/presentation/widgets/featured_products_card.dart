@@ -75,7 +75,7 @@ class FeaturedProCard extends StatelessWidget {
                 textAlign: TextAlign.end,
               ),
               Text(
-                '${category.price}Sp',
+                '${category.price}\$',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: textTheme.titleSmall?.copyWith(

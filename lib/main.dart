@@ -6,6 +6,7 @@ import 'generated/l10n.dart';
 import 'core/constants/theme.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
