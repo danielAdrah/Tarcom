@@ -15,6 +15,11 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const SignInPage(),
     ),
     GoRoute(
+      path: '/verfiyCodePage',
+      name: 'verfiyCodePage',
+      builder: (context, state) => const VerfiyCodePage(),
+    ),
+    GoRoute(
       path: '/homePage',
       name: 'homePage',
       builder: (context, state) => const HomePage(),

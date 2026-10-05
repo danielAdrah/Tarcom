@@ -163,7 +163,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   delay: Duration(milliseconds: 1500),
                   child: ElevatedButton(
                     onPressed: () {
-                      context.pushNamed('mainNavBar');
+                      context.pushNamed('verfiyCodePage');
                     },
                     child: Text('إنشاء حساب'),
                   ),
@@ -188,7 +188,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                context.goNamed('signInPage');
+                                context.goNamed('verfiyCodePage');
                               },
                           ),
                         ],
