@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/common/app_background.dart';
@@ -82,10 +81,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             );
 
-            context.pushNamed(
-              'verfiyCodePage',
-              extra: emailController.text.trim(),
-            );
+            context.pushNamed('verfiyCodePage', extra: state.email);
           }
 
           // =====================================================

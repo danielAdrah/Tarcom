@@ -34,7 +34,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
         ),
       );
 
-      emit(SignUpSuccess(response: response));
+      emit(SignUpSuccess(response: response, email: event.email));
     } on ApiException catch (e) {
       emit(SignUpFailure(message: e.message, exception: e));
     } catch (e) {

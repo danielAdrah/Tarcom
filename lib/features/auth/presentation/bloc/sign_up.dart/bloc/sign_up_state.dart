@@ -17,11 +17,12 @@ class SignUpLoading extends SignUpState {
 
 class SignUpSuccess extends SignUpState {
   final SignUpEntity response;
+  final String email;
 
-  const SignUpSuccess({required this.response});
+  const SignUpSuccess({required this.response, required this.email});
 
   @override
-  List<Object> get props => [response];
+  List<Object> get props => [response, email];
 }
 
 class SignUpFailure extends SignUpState {
