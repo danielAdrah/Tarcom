@@ -1,205 +1,176 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show SocketException;
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import '../error/exceptions.dart';
+import '../apiKeys/end_point.dart';
+import '../errors/api_excptions.dart';
 
-/// Returns headers to attach to every request (e.g. authentication).
-/// Left as a callback because the auth mechanism is defined by the backend.
-typedef HeadersBuilder = Map<String, String> Function();
-
-/// Centralised HTTP client. Data sources call this; nothing else touches `http`.
-/// Returns the decoded JSON body (Map / List / String / null) or throws an
-/// [AppException].
 class ApiClient {
-  ApiClient({
-    required this.baseUrl,
-    http.Client? client,
-    this.authHeaders,
-    this.timeout = const Duration(seconds: 30),
-    this.enableLogging = kDebugMode,
-  }) : _client = client ?? http.Client();
+  final http.Client client;
 
-  final String baseUrl;
-  final Duration timeout;
-  final bool enableLogging;
-  final HeadersBuilder? authHeaders;
-  final http.Client _client;
+  ApiClient(this.client);
 
-  Future<dynamic> get(
-    String path, {
-    Map<String, dynamic>? queryParameters,
-    Map<String, String>? headers,
-  }) => _send('GET', path, queryParameters: queryParameters, headers: headers);
-
-  Future<dynamic> post(
-    String path, {
-    Object? body,
-    Map<String, dynamic>? queryParameters,
-    Map<String, String>? headers,
-  }) => _send(
-    'POST',
-    path,
-    body: body,
-    queryParameters: queryParameters,
-    headers: headers,
-  );
-
-  Future<dynamic> put(
-    String path, {
-    Object? body,
-    Map<String, dynamic>? queryParameters,
-    Map<String, String>? headers,
-  }) => _send(
-    'PUT',
-    path,
-    body: body,
-    queryParameters: queryParameters,
-    headers: headers,
-  );
-
-  Future<dynamic> patch(
-    String path, {
-    Object? body,
-    Map<String, dynamic>? queryParameters,
-    Map<String, String>? headers,
-  }) => _send(
-    'PATCH',
-    path,
-    body: body,
-    queryParameters: queryParameters,
-    headers: headers,
-  );
-
-  Future<dynamic> delete(
-    String path, {
-    Object? body,
-    Map<String, dynamic>? queryParameters,
-    Map<String, String>? headers,
-  }) => _send(
-    'DELETE',
-    path,
-    body: body,
-    queryParameters: queryParameters,
-    headers: headers,
-  );
-
-  // ---------------------------------------------------------------------------
-
-  Future<dynamic> _send(
-    String method,
-    String path, {
-    Object? body,
-    Map<String, dynamic>? queryParameters,
+  Future<Map<String, dynamic>> post(
+    String endpoint, {
+    Map<String, dynamic>? body,
     Map<String, String>? headers,
   }) async {
-    final uri = _buildUri(path, queryParameters);
-    final request = http.Request(method, uri)
-      ..headers.addAll({
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...?authHeaders?.call(),
-        ...?headers,
-      });
-    if (body != null) request.body = jsonEncode(body);
-
-    _log('--> $method $uri${body != null ? '\n    body: ${request.body}' : ''}');
-
     try {
-      final streamed = await _client.send(request).timeout(timeout);
-      final response = await http.Response.fromStream(streamed);
-      _log(
-        '<-- ${response.statusCode} $uri\n'
-        '    ${_truncate(utf8.decode(response.bodyBytes, allowMalformed: true))}',
-      );
+      print("1 from post");
+      final response = await client
+          .post(
+            Uri.parse('${EndPoint.baseUrl}$endpoint'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              ...?headers,
+            },
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(const Duration(seconds: 30));
+      print("2 from post");
+      print("the body is ${response.body}");
+
       return _handleResponse(response);
-    } on AppException {
-      rethrow;
     } on TimeoutException {
-      throw const RequestTimeoutException();
-    } on SocketException {
-      throw const NetworkException();
+      throw const TimeoutException();
+    } on ApiException {
+      rethrow;
     } on http.ClientException {
       throw const NetworkException();
     } catch (e) {
-      throw UnknownException(e.toString());
+      throw const UnknownApiException();
     }
   }
 
-  Uri _buildUri(String path, Map<String, dynamic>? query) {
-    if (baseUrl.isEmpty) {
-      throw StateError(
-        'API base URL is empty. Run with --dart-define=API_BASE_URL=<url>.',
-      );
-    }
-    final base = baseUrl.endsWith('/')
-        ? baseUrl.substring(0, baseUrl.length - 1)
-        : baseUrl;
-    final cleanPath = path.startsWith('/') ? path : '/$path';
+  Map<String, dynamic> _handleResponse(http.Response response) {
+    dynamic decodedBody;
 
-    final params = <String, dynamic>{};
-    query?.forEach((key, value) {
-      if (value == null) return;
-      params[key] = value is Iterable
-          ? value.map((e) => e.toString()).toList()
-          : value.toString();
-    });
-
-    final uri = Uri.parse('$base$cleanPath');
-    return params.isEmpty ? uri : uri.replace(queryParameters: params);
-  }
-
-  dynamic _handleResponse(http.Response response) {
-    final status = response.statusCode;
-    final decoded = _decodeBody(response);
-
-    if (status >= 200 && status < 300) return decoded;
-
-    // Error body shape is not known yet: only pick a message if the backend
-    // clearly sent a plain string under the conventional "message" key.
-    final message = _extractMessage(decoded);
-
-    switch (status) {
-      case 401:
-        throw UnauthorizedException(message);
-      case 403:
-        throw ForbiddenException(message);
-      case 404:
-        throw NotFoundException(message);
-      case 400:
-      case 422:
-        throw ValidationException(message, decoded);
-      default:
-        throw ServerException(message, status);
-    }
-  }
-
-  dynamic _decodeBody(http.Response response) {
-    if (response.bodyBytes.isEmpty) return null;
-    final text = utf8.decode(response.bodyBytes, allowMalformed: true);
     try {
-      return jsonDecode(text);
-    } on FormatException {
-      return text;
+      if (response.body.isNotEmpty) {
+        print("empty body from post");
+        decodedBody = jsonDecode(response.body);
+        print("3 from post after decoding the body");
+      }
+    } catch (_) {
+      decodedBody = null;
+    }
+
+    // =========================================================
+    // SUCCESS
+    // =========================================================
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      print("4 from post is 200 code");
+      if (decodedBody is Map<String, dynamic>) {
+        return decodedBody;
+      }
+
+      throw const UnknownApiException(message: 'استجابة غير صالحة من الخادم.');
+    }
+
+    // =========================================================
+    // ERROR
+    // =========================================================
+
+    final String message = _extractArabicMessage(
+      decodedBody is Map<String, dynamic> ? decodedBody['message'] : null,
+    );
+
+    final Map<String, dynamic>? errors =
+        decodedBody is Map<String, dynamic> &&
+            decodedBody['errors'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(decodedBody['errors'] as Map)
+        : null;
+
+    switch (response.statusCode) {
+      case 400:
+        throw ValidationException(
+          message: message,
+          statusCode: response.statusCode,
+          errors: errors,
+        );
+
+      case 401:
+        throw UnauthorizedException(message: message);
+
+      case 403:
+        throw ForbiddenException(message: message);
+
+      case 404:
+        throw NotFoundException(message: message);
+
+      case 500:
+      case 501:
+      case 502:
+      case 503:
+      case 504:
+        throw ServerException(
+          message: message,
+          statusCode: response.statusCode,
+        );
+
+      default:
+        throw ApiException(
+          message: message,
+          statusCode: response.statusCode,
+          errors: errors,
+        );
     }
   }
 
-  String? _extractMessage(dynamic body) {
-    if (body is Map && body['message'] is String) {
-      return body['message'] as String;
+  String _extractArabicMessage(dynamic value) {
+    // =========================================================
+    // Case 1:
+    // message is already a Map
+    // =========================================================
+
+    if (value is Map<String, dynamic>) {
+      final arabicMessage = value['ar'];
+
+      if (arabicMessage is String && arabicMessage.trim().isNotEmpty) {
+        return arabicMessage;
+      }
+
+      final englishMessage = value['en'];
+
+      if (englishMessage is String && englishMessage.trim().isNotEmpty) {
+        return englishMessage;
+      }
     }
-    return null;
+
+    // =========================================================
+    // Case 2:
+    // message is a JSON String
+    // =========================================================
+
+    if (value is String && value.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(value);
+
+        if (decoded is Map<String, dynamic>) {
+          final arabicMessage = decoded['ar'];
+
+          if (arabicMessage is String && arabicMessage.trim().isNotEmpty) {
+            return arabicMessage;
+          }
+
+          final englishMessage = decoded['en'];
+
+          if (englishMessage is String && englishMessage.trim().isNotEmpty) {
+            return englishMessage;
+          }
+        }
+      } catch (_) {
+        // إذا لم تكن الرسالة JSON
+        // نرجع النص نفسه.
+        return value;
+      }
+
+      return value;
+    }
+
+    return 'حدث خطأ أثناء تنفيذ الطلب.';
   }
-
-  void _log(String message) {
-    if (enableLogging) debugPrint('[ApiClient] $message');
-  }
-
-  String _truncate(String s, [int max = 1000]) =>
-      s.length <= max ? s : '${s.substring(0, max)}…';
-
-  void dispose() => _client.close();
 }

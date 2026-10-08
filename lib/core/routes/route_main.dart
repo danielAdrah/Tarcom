@@ -14,10 +14,18 @@ final GoRouter router = GoRouter(
       name: 'signInPage',
       builder: (context, state) => const SignInPage(),
     ),
+    // GoRoute(
+    //   path: '/verfiyCodePage',
+    //   name: 'verfiyCodePage',
+    //   builder: (context, state) => const VerfiyCodePage(),
+    // ),
     GoRoute(
       path: '/verfiyCodePage',
       name: 'verfiyCodePage',
-      builder: (context, state) => const VerfiyCodePage(),
+      builder: (context, state) {
+        final String email = state.extra as String;
+        return VerfiyCodePage(email: email);
+      },
     ),
     GoRoute(
       path: '/homePage',
