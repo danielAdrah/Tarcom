@@ -1,3 +1,4 @@
+import '../entities/sign_in_response_entity.dart';
 import '../entities/sign_up_entity.dart';
 import '../entities/verify_otp_response_entity.dart';
 
@@ -15,5 +16,10 @@ abstract class AuthRepository {
     required String email,
     required int code,
     required String codeType,
+  });
+
+  Future<SignInResponseEntity> signIn({
+    required String email,
+    required String password,
   });
 }

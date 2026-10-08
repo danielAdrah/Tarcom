@@ -3,6 +3,7 @@ import 'package:get_storage/get_storage.dart';
 import '../../../../core/api/apiKeys/end_point.dart';
 import '../../../../core/api/apiKeys/store_keys.dart';
 import '../../../../core/api/network/api_client.dart';
+import '../models/sign_in_response_model.dart';
 import '../models/sign_up_response_model.dart';
 import '../models/verify_otp_response_model.dart';
 
@@ -23,6 +24,12 @@ abstract class AuthRemoteDataSource {
     required String email,
     required int code,
     required String codeType,
+  });
+
+  //sign in method
+  Future<SignInResponseModel> signIn({
+    required String email,
+    required String password,
   });
 }
 
@@ -78,15 +85,46 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final verifyOtpResponse = VerifyOtpResponseModel.fromJson(response);
 
+      // //get the tokens
+      // final String accessToken = verifyOtpResponse.tokens.access;
+      // final String refreshToken = verifyOtpResponse.tokens.refresh;
+
+      // //store the tokens
+      // await storage.write(StorageKeys.accessToken, accessToken);
+      // await storage.write(StorageKeys.refreshToken, refreshToken);
+
+      return VerifyOtpResponseModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  //sign in method implementation
+  @override
+  Future<SignInResponseModel> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        EndPoint.signIn,
+        body: {'email': email, 'password': password},
+        headers: {'Accept-Language': 'ar'},
+      );
+
+      final signInResponse = SignInResponseModel.fromJson(response);
       //get the tokens
-      final String accessToken = verifyOtpResponse.tokens.access;
-      final String refreshToken = verifyOtpResponse.tokens.refresh;
+      final String accessToken = signInResponse.tokens.access;
+      final String refreshToken = signInResponse.tokens.refresh;
+
+      print("================ $accessToken");
 
       //store the tokens
       await storage.write(StorageKeys.accessToken, accessToken);
+
       await storage.write(StorageKeys.refreshToken, refreshToken);
 
-      return VerifyOtpResponseModel.fromJson(response);
+      return signInResponse;
     } catch (e) {
       rethrow;
     }

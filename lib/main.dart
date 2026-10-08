@@ -7,6 +7,7 @@ import 'package:tarcom/core/di/injection_container.dart' as di;
 import 'package:tarcom/features/auth/presentation/bloc/verify_otp/bloc/verify_otp_bloc.dart';
 // import 'core/di/injection_container.dart';
 import 'core/routes/route_main.dart';
+import 'features/auth/presentation/bloc/sign_in.dart/bloc/sign_in_bloc.dart';
 import 'features/auth/presentation/bloc/sign_up.dart/bloc/sign_up_bloc.dart';
 import 'generated/l10n.dart';
 import 'core/constants/theme.dart';
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
         providers: [
           BlocProvider(create: (context) => di.sl<SignUpBloc>()),
           BlocProvider(create: (context) => di.sl<VerifyOtpBloc>()),
+          BlocProvider(create: (context) => di.sl<SignInBloc>()),
         ],
         child: MaterialApp.router(
           routerConfig: router,

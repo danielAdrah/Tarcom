@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 
 import '../../features/auth/data/repostories/auth_repository_impl.dart';
 import '../../features/auth/domain/repostories/auth_repo.dart';
+import '../../features/auth/domain/useCases/sign_in_use_case.dart';
 import '../../features/auth/domain/useCases/verify_otp_use_case.dart';
+import '../../features/auth/presentation/bloc/sign_in.dart/bloc/sign_in_bloc.dart';
 import '../../features/auth/presentation/bloc/sign_up.dart/bloc/sign_up_bloc.dart';
 import '../../features/auth/presentation/bloc/verify_otp/bloc/verify_otp_bloc.dart';
 import '../api/network/api_client.dart';
@@ -58,6 +60,9 @@ void initAuth() {
   sl.registerLazySingleton<VerifyOtpUseCase>(
     () => VerifyOtpUseCase(sl<AuthRepository>()),
   );
+  sl.registerLazySingleton<SignInUseCase>(
+    () => SignInUseCase(sl<AuthRepository>()),
+  );
 
   // =========================================================
   // Auth - Presentation
@@ -68,4 +73,5 @@ void initAuth() {
   sl.registerFactory<VerifyOtpBloc>(
     () => VerifyOtpBloc(verifyOtpUseCase: sl()),
   );
+  sl.registerFactory<SignInBloc>(() => SignInBloc(signInUseCase: sl()));
 }

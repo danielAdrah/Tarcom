@@ -32,6 +32,7 @@ class _VerfiyCodePageState extends State<VerfiyCodePage> {
         listener: (context, state) {
           if (state is VerifyOtpSuccess) {
             print('Verification successful: ${state.response}');
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -42,7 +43,8 @@ class _VerfiyCodePageState extends State<VerfiyCodePage> {
                 backgroundColor: AppColors.success,
               ),
             );
-            context.goNamed('mainNavBar');
+
+            context.goNamed('signInPage');
           }
           if (state is VerifyOtpFailure) {
             print('Verification failed: ${state.message}');
