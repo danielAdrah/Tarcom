@@ -10,3 +10,4 @@ export '../../features/products/presentation/pages/product_details_page.dart';
 export '../../features/products/presentation/pages/products_page.dart';
 export '../../features/products/presentation/pages/products_company_page.dart';
 export '../../features/auth/presentation/pages/verfiy_code_page.dart';
+export '../../features/home/presentation/pages/featured_products_page.dart';

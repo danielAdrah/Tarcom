@@ -2,7 +2,10 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:lottie/lottie.dart';
+
+import '../api/apiKeys/store_keys.dart';
 
 class LoadingPage extends StatefulWidget {
   const LoadingPage({super.key});
@@ -15,9 +18,35 @@ class _LoadingPageState extends State<LoadingPage> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
+    _resolveAuthRoute();
+  }
+
+  /// Checks whether the user has a previously stored session (valid tokens)
+  /// and navigates to the appropriate route once the loading animation ends.
+  Future<void> _resolveAuthRoute() async {
+    // Determine the destination while the loading animation is playing.
+    final bool isLoggedIn = _hasValidSession();
+
+    // Keep the splash visible for its intended duration before navigating.
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
+    if (isLoggedIn) {
+      context.goNamed('mainNavBar');
+    } else {
       context.goNamed('signInPage');
-    });
+    }
+  }
+
+  /// Returns true when non-empty access & refresh tokens exist in storage.
+  bool _hasValidSession() {
+    final box = GetStorage();
+    final String? accessToken = box.read<String>(StorageKeys.accessToken);
+    final String? refreshToken = box.read<String>(StorageKeys.refreshToken);
+    return accessToken != null &&
+        accessToken.isNotEmpty &&
+        refreshToken != null &&
+        refreshToken.isNotEmpty;
   }
 
   @override

@@ -6,4 +6,6 @@ class EndPoint {
   static const String signUp = 'auth/signup/';
   static const String signIn = 'auth/login/';
   static const String verifyOtp = 'auth/verify-otp/';
+  static const String getCategories = 'categories/';
+  static const String getFeaturedMaterials = 'features/';
 }

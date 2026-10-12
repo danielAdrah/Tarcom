@@ -9,6 +9,8 @@ import 'package:tarcom/features/auth/presentation/bloc/verify_otp/bloc/verify_ot
 import 'core/routes/route_main.dart';
 import 'features/auth/presentation/bloc/sign_in.dart/bloc/sign_in_bloc.dart';
 import 'features/auth/presentation/bloc/sign_up.dart/bloc/sign_up_bloc.dart';
+import 'features/home/presentation/bloc/get_featured_materials/get_featured_materials_bloc.dart';
+import 'features/products/presentation/bloc/bloc/get_categories_bloc.dart';
 import 'generated/l10n.dart';
 import 'core/constants/theme.dart';
 
@@ -34,6 +36,8 @@ class MyApp extends StatelessWidget {
           BlocProvider(create: (context) => di.sl<SignUpBloc>()),
           BlocProvider(create: (context) => di.sl<VerifyOtpBloc>()),
           BlocProvider(create: (context) => di.sl<SignInBloc>()),
+          BlocProvider(create: (context) => di.sl<GetCategoriesBloc>()),
+          BlocProvider(create: (context) => di.sl<GetFeaturedMaterialsBloc>()),
         ],
         child: MaterialApp.router(
           routerConfig: router,

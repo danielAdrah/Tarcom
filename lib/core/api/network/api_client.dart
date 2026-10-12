@@ -11,6 +11,7 @@ class ApiClient {
 
   ApiClient(this.client);
 
+  // POST request
   Future<Map<String, dynamic>> post(
     String endpoint, {
     Map<String, dynamic>? body,
@@ -44,17 +45,60 @@ class ApiClient {
     }
   }
 
+  //GET request
+  Future<Map<String, dynamic>> get(
+    String endpoint, {
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? headers,
+  }) async {
+    try {
+      final baseUri = Uri.parse('${EndPoint.baseUrl}$endpoint');
+
+      final uri = queryParameters != null && queryParameters.isNotEmpty
+          ? baseUri.replace(
+              queryParameters: {
+                ...baseUri.queryParameters,
+                ...queryParameters.map(
+                  (key, value) => MapEntry(key, value?.toString() ?? ''),
+                ),
+              },
+            )
+          : baseUri;
+
+      final response = await client
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              ...?headers,
+            },
+          )
+          .timeout(const Duration(seconds: 30));
+
+      return _handleResponse(response);
+    } on TimeoutException {
+      throw const TimeoutException();
+    } on ApiException {
+      rethrow;
+    } on http.ClientException {
+      throw const NetworkException();
+    } catch (_) {
+      throw const UnknownApiException();
+    }
+  }
+
   Map<String, dynamic> _handleResponse(http.Response response) {
     dynamic decodedBody;
 
     try {
       if (response.body.isNotEmpty) {
-        print("empty body from post");
         decodedBody = jsonDecode(response.body);
         print("3 from post after decoding the body");
       }
     } catch (_) {
       decodedBody = null;
+      print("empty body from post");
     }
 
     // =========================================================

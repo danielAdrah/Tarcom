@@ -1,35 +1,34 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/colors.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../domain/entities/featured_material_entity.dart';
+import '../bloc/get_featured_materials/get_featured_materials_bloc.dart';
 import '../widgets/category_label.dart';
 import '../widgets/featured_products_card.dart';
+import '../widgets/featured_product_shimmer_card.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          sl<GetFeaturedMaterialsBloc>()
+            ..add(const GetFeaturedMaterialsRequested(pageSize: 2)),
+      child: const _HomeView(),
+    );
+  }
 }
 
-class _HomePageState extends State<HomePage> {
-  final String userName = "Daniel";
+class _HomeView extends StatelessWidget {
+  const _HomeView();
 
-  final List<CategoryItem> categories = const [
-    CategoryItem(
-      title: 'Asus Tuf ',
-      briefDesc: 'Core i7 12th Gen, 16GB RAM, 512GB SSD',
-      img: 'assets/img/p1.png',
-      price: '1200',
-    ),
-    CategoryItem(
-      title: 'Asus Tuf ',
-      briefDesc: 'Core i7 12th Gen, 16GB RAM, 512GB SSD',
-      img: 'assets/img/p2.png',
-      price: '1500',
-    ),
-  ];
+  final String userName = "Daniel";
 
   @override
   Widget build(BuildContext context) {
@@ -313,7 +312,9 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          context.pushNamed('featuredProductsPage');
+                        },
                         icon: Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 20.w,
@@ -326,35 +327,38 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            //Featured products section
+            //Featured products section: Loading / Success / Failure
             SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: 15.r),
-              sliver: SliverGrid.builder(
-                itemCount: categories.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 15.h,
-                  crossAxisSpacing: 15.w,
-                  childAspectRatio: 0.75,
-                ),
-                itemBuilder: (context, index) {
-                  final category = categories[index];
-                  return FadeInUp(
-                    delay: Duration(milliseconds: 900),
-                    child: FeaturedProCard(
-                      category: category,
-                      textTheme: textTheme,
-                      onTap: () {},
-                    ),
-                  );
-                  // CategoryCard(
-                  //   category: category,
-                  //   onTap: () {
-                  //     // Handle card tap
-                  //   },
-                  // );
-                },
-              ),
+              sliver:
+                  BlocBuilder<
+                    GetFeaturedMaterialsBloc,
+                    GetFeaturedMaterialsState
+                  >(
+                    builder: (context, state) {
+                      if (state is GetFeaturedMaterialsInitial ||
+                          state is GetFeaturedMaterialsLoading) {
+                        return _buildFeaturedLoadingGrid();
+                      }
+
+                      if (state is GetFeaturedMaterialsFailure) {
+                        return _buildFeaturedFailure(context, state.message);
+                      }
+
+                      if (state is GetFeaturedMaterialsSuccess) {
+                        // عرض أول منتجين فقط في الرئيسية.
+                        final materials = state.materials.take(2).toList();
+
+                        if (materials.isEmpty) {
+                          return _buildFeaturedEmpty(context);
+                        }
+
+                        return _buildFeaturedGrid(materials);
+                      }
+
+                      return const SliverToBoxAdapter(child: SizedBox.shrink());
+                    },
+                  ),
             ),
             SliverToBoxAdapter(child: SizedBox(height: 50.h)),
           ],
@@ -362,110 +366,109 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-}
 
-class CategoryItem {
-  const CategoryItem({
-    required this.title,
-    required this.briefDesc,
-    required this.img,
-    required this.price,
-  });
+  //==-=-=-=-=-=-=-=-=-=-==
+  // Featured products states
+  //==-=-=-=-=-=-=-=-=-=-==
 
-  final String title;
-  final String briefDesc;
-  final String img;
-  final String price;
-}
+  Widget _buildFeaturedLoadingGrid() {
+    return SliverGrid.builder(
+      itemCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 15.h,
+        crossAxisSpacing: 15.w,
+        childAspectRatio: 0.75,
+      ),
+      itemBuilder: (_, _) => const FeaturedProductShimmerCard(),
+    );
+  }
 
-class CategoryCard extends StatelessWidget {
-  const CategoryCard({required this.category, this.onTap, super.key});
+  Widget _buildFeaturedGrid(List<FeaturedMaterialEntity> materials) {
+    return SliverGrid.builder(
+      itemCount: materials.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 15.h,
+        crossAxisSpacing: 15.w,
+        childAspectRatio: 0.75,
+      ),
+      itemBuilder: (context, index) {
+        final material = materials[index];
 
-  final CategoryItem category;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Material(
-      // color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16.r),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16.r),
-        child: Container(
-          padding: EdgeInsets.fromLTRB(12.w, 25.h, 12.w, 25.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.06),
-                blurRadius: 12.r,
-                offset: Offset(0, 5.h),
-              ),
-            ],
+        return FadeInUp(
+          delay: Duration(milliseconds: 100 * (index + 1)),
+          child: FeaturedProCard(
+            material: material,
+            onTap: () {
+              context.pushNamed(
+                'productDetailsPage',
+                extra: material.specifications,
+              );
+            },
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: AppColors.blue50,
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Image.asset(
-                        category.img,
-                        width: 150.w,
-                        height: 150.h,
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                // textDirection: TextDirection.rtl,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          category.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          // textDirection: TextDirection.rtl,
-                          style: textTheme.titleSmall?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          category.briefDesc,
-                          // overflow: TextOverflow.ellipsis,
-                          // textDirection: TextDirection.rtl,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeaturedFailure(BuildContext context, String message) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+        child: Column(
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 40.w,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              'تعذّر تحميل المنتجات المميزة',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            SizedBox(height: 12.h),
+            FilledButton.icon(
+              onPressed: () {
+                context.read<GetFeaturedMaterialsBloc>().add(
+                  const GetFeaturedMaterialsRequested(pageSize: 2),
+                );
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeaturedEmpty(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 24.h),
+        child: Column(
+          children: [
+            Icon(
+              Icons.star_border_rounded,
+              size: 48.w,
+              color: AppColors.primary,
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              'لا توجد منتجات مميزة حالياً',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ],
         ),
       ),
     );

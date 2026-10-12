@@ -1,58 +1,42 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
-import '../widgets/category_cell.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../domain/entities/category_entity.dart';
 
-class ProductsCategoryPage extends StatefulWidget {
+import '../bloc/bloc/get_categories_bloc.dart';
+import '../widgets/category_cell.dart';
+import '../widgets/category_shimmer_cell.dart';
+
+class ProductsCategoryPage extends StatelessWidget {
   const ProductsCategoryPage({super.key});
 
   @override
-  State<ProductsCategoryPage> createState() => _ProductsCategoryPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          sl<GetCategoriesBloc>()..add(const GetCategoriesRequested()),
+      child: const _ProductsCategoryView(),
+    );
+  }
 }
 
-class _ProductsCategoryPageState extends State<ProductsCategoryPage> {
-  final List<CategoryLabel> categories = [
-    CategoryLabel(title: 'لابتوبات', img: 'assets/img/p1.png', count: '6'),
-    CategoryLabel(
-      title: 'بطاريات',
-      img: 'assets/img/batterylabel.png',
-      count: '15',
-    ),
-    CategoryLabel(
-      title: 'ألواح شمسية',
-      img: 'assets/img/solarlabel.png',
-      count: '15',
-    ),
-    CategoryLabel(
-      title: 'أكبال',
-      img: 'assets/img/cablelabel.png',
-      count: '15',
-    ),
-    CategoryLabel(
-      title: 'إكسسوارات',
-      img: 'assets/img/accessorieslabel.png',
-      count: '15',
-    ),
-    CategoryLabel(
-      title: 'غير ذلك',
-      img: 'assets/img/accessorieslabel.png',
-      count: '15',
-    ),
-  ];
+class _ProductsCategoryView extends StatelessWidget {
+  const _ProductsCategoryView();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: AppColors.surface,
       body: SafeArea(
         child: FadeInUp(
-          delay: Duration(milliseconds: 300),
+          delay: const Duration(milliseconds: 300),
           child: CustomScrollView(
             slivers: [
-              //Banner
+              // Banner
               SliverAppBar(
                 automaticallyImplyLeading: false,
                 stretch: true,
@@ -61,47 +45,39 @@ class _ProductsCategoryPageState extends State<ProductsCategoryPage> {
                 elevation: 0,
                 flexibleSpace: FlexibleSpaceBar(
                   background: ZoomIn(
-                    delay: Duration(microseconds: 350),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        // horizontal: 15.r,
-                        // vertical: 10.r,
-                      ),
-                      child: Image.asset(
-                        'assets/img/products_banner.png',
-                        fit: BoxFit.cover,
-                      ),
+                    delay: const Duration(milliseconds: 350),
+                    child: Image.asset(
+                      'assets/img/products_banner.png',
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
               ),
-              //Products Grid
-              SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 15.r, vertical: 20.r),
-                sliver: SliverGrid.builder(
-                  itemCount: categories.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 15.h,
-                    crossAxisSpacing: 15.w,
-                    childAspectRatio: 1,
-                  ),
-                  itemBuilder: (context, index) {
-                    return CategoryCell(
-                      onTap: () {
-                        context.pushNamed(
-                          'productsCompanyPage',
-                          extra: categories[index].title,
-                        );
-                        // context.pushNamed(
-                        //   'productsPage',
-                        //   extra: categories[index].title,
-                        // );
-                      },
-                      category: categories[index],
-                    );
-                  },
-                ),
+
+              // Categories: Loading / Success / Failure
+              BlocBuilder<GetCategoriesBloc, GetCategoriesState>(
+                builder: (context, state) {
+                  if (state is GetCategoriesInitial ||
+                      state is GetCategoriesLoading) {
+                    return _buildLoadingGrid();
+                  }
+
+                  if (state is GetCategoriesFailure) {
+                    return _buildFailure(context, state.message);
+                  }
+
+                  if (state is GetCategoriesSuccess) {
+                    final categories = state.response.results;
+
+                    if (categories.isEmpty) {
+                      return _buildEmptyState();
+                    }
+
+                    return _buildCategoriesGrid(categories);
+                  }
+
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                },
               ),
             ],
           ),
@@ -109,12 +85,117 @@ class _ProductsCategoryPageState extends State<ProductsCategoryPage> {
       ),
     );
   }
-}
 
-class CategoryLabel {
-  final String title;
-  final String count;
-  final String img;
+  Widget _buildLoadingGrid() {
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: 15.r, vertical: 20.r),
+      sliver: SliverGrid.builder(
+        itemCount: 6,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 15.h,
+          crossAxisSpacing: 15.w,
+          childAspectRatio: 1,
+        ),
+        itemBuilder: (_, _) => const CategoryShimmerCell(),
+      ),
+    );
+  }
 
-  CategoryLabel({required this.title, required this.count, required this.img});
+  Widget _buildCategoriesGrid(List<CategoryEntity> categories) {
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: 15.r, vertical: 20.r),
+      sliver: SliverGrid.builder(
+        itemCount: categories.length,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 15.h,
+          crossAxisSpacing: 15.w,
+          childAspectRatio: 1,
+        ),
+        itemBuilder: (context, index) {
+          final category = categories[index];
+
+          return CategoryCell(
+            category: category,
+            onTap: () {
+              //we need to change the product company page later so it takes the category object not just a string
+              context.pushNamed('productsCompanyPage', extra: category);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFailure(BuildContext context, String message) {
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.cloud_off_rounded,
+                size: 52.w,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'تعذّر تحميل الفئات',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              SizedBox(height: 20.h),
+              FilledButton.icon(
+                onPressed: () {
+                  context.read<GetCategoriesBloc>().add(
+                    const GetCategoriesRequested(),
+                  );
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('إعادة المحاولة'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.category_outlined,
+                size: 100.w,
+                color: AppColors.primary,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'لا توجد فئات متاحة حالياً',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 19.sp),
+                // style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

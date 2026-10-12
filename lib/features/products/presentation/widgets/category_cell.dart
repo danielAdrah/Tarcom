@@ -2,20 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/colors.dart';
-import '../pages/products_category_page.dart';
+import '../../domain/entities/category_entity.dart';
 
 class CategoryCell extends StatelessWidget {
   const CategoryCell({required this.category, this.onTap, super.key});
 
-  final CategoryLabel category;
+  final CategoryEntity category;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
     return Material(
       color: AppColors.surface,
+      // color: Colors.white,
       borderRadius: BorderRadius.circular(16.r),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16.r),
@@ -35,11 +38,7 @@ class CategoryCell extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Center(
-                  child: Image.asset(category.img, width: 140.w, height: 140.h),
-                ),
-              ),
+              Expanded(child: Center(child: _buildCategoryImage())),
               SizedBox(height: 10.h),
               Row(
                 textDirection: TextDirection.rtl,
@@ -49,7 +48,9 @@ class CategoryCell extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          category.title,
+                          category.nameAr.isNotEmpty
+                              ? category.nameAr
+                              : category.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textDirection: TextDirection.rtl,
@@ -60,7 +61,9 @@ class CategoryCell extends StatelessWidget {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          '${category.count} منتج',
+                          'استكشف المنتجات',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           textDirection: TextDirection.rtl,
                           style: textTheme.labelSmall?.copyWith(
                             color: AppColors.textSecondary,
@@ -80,6 +83,43 @@ class CategoryCell extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCategoryImage() {
+    //here first it checks if the category has an image, if not it uses the icon, and if both are empty it shows a fallback icon
+    final imageUrl = category.image.isNotEmpty ? category.image : category.icon;
+
+    if (imageUrl.isEmpty) {
+      return _imageFallback();
+    }
+
+    return Image.network(
+      imageUrl,
+      width: 140.w,
+      height: 140.h,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        if (imageUrl != category.icon && category.icon.isNotEmpty) {
+          return Image.network(
+            category.icon,
+            width: 140.w,
+            height: 140.h,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => _imageFallback(),
+          );
+        }
+
+        return _imageFallback();
+      },
+    );
+  }
+
+  Widget _imageFallback() {
+    return Icon(
+      Icons.image_not_supported_outlined,
+      size: 42.w,
+      color: AppColors.textSecondary,
     );
   }
 }

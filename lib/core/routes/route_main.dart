@@ -43,6 +43,11 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const ProductsCategoryPage(),
     ),
     GoRoute(
+      path: '/featuredProductsPage',
+      name: 'featuredProductsPage',
+      builder: (context, state) => const FeaturedProductsPage(),
+    ),
+    GoRoute(
       path: '/productsPage',
       name: 'productsPage',
       builder: (context, state) {
@@ -50,6 +55,7 @@ final GoRouter router = GoRouter(
         return ProductsPage(productsCatTitle: proCategory);
       },
     ),
+
     GoRoute(
       path: '/productDetailsPage',
       name: 'productDetailsPage',

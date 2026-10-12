@@ -233,3 +233,11 @@ class CompanyCell extends StatelessWidget {
     );
   }
 }
+
+class CategoryLabel {
+  final String title;
+  final String count;
+  final String img;
+
+  CategoryLabel({required this.title, required this.count, required this.img});
+}
