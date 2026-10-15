@@ -5,8 +5,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../products/presentation/pages/product_details_page.dart';
 import '../../domain/entities/featured_material_entity.dart';
+import '../../../search/presentation/cubit/search_cubit.dart';
+import '../../../search/presentation/widgets/home_search_bar.dart';
+import '../bloc/get_banners/get_banners_bloc.dart';
 import '../bloc/get_featured_materials/get_featured_materials_bloc.dart';
+import '../widgets/banner_carousel.dart';
 import '../widgets/category_label.dart';
 import '../widgets/featured_products_card.dart';
 import '../widgets/featured_product_shimmer_card.dart';
@@ -16,10 +21,18 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) =>
-          sl<GetFeaturedMaterialsBloc>()
-            ..add(const GetFeaturedMaterialsRequested(pageSize: 2)),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              sl<GetFeaturedMaterialsBloc>()
+                ..add(const GetFeaturedMaterialsRequested(pageSize: 2)),
+        ),
+        BlocProvider(
+          create: (_) => sl<GetBannersBloc>()..add(const GetBannersRequested()),
+        ),
+        BlocProvider(create: (_) => sl<SearchCubit>()),
+      ],
       child: const _HomeView(),
     );
   }
@@ -78,26 +91,6 @@ class _HomeView extends StatelessWidget {
                         delay: Duration(milliseconds: 500),
                         child: Row(
                           children: [
-                            InkWell(
-                              onTap: () {},
-                              child: Container(
-                                padding: EdgeInsets.all(3.r),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(15.r),
-                                ),
-                                child: Icon(
-                                  Icons.notifications,
-                                  size: 30.w,
-                                  color: const Color.fromARGB(
-                                    255,
-                                    70,
-                                    148,
-                                    218,
-                                  ),
-                                ),
-                              ),
-                            ),
                             SizedBox(width: 5.w),
                             InkWell(
                               onTap: () {},
@@ -108,7 +101,7 @@ class _HomeView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(15.r),
                                 ),
                                 child: Icon(
-                                  Icons.person,
+                                  Icons.logout_rounded,
                                   size: 30.w,
                                   color: const Color.fromARGB(
                                     255,
@@ -134,65 +127,7 @@ class _HomeView extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(15.r, 14.h, 15.r, 20.h),
                 child: FadeInUp(
                   delay: Duration(milliseconds: 600),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(18.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          blurRadius: 18.r,
-                          offset: Offset(0, 7.h),
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 4.r,
-                          offset: Offset(0, 2.h),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      textDirection: TextDirection.rtl,
-                      textAlign: TextAlign.right,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'ابحث عن منتج...',
-                        hintStyle: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          size: 24.w,
-                          color: AppColors.primary,
-                        ),
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 18.w,
-                          vertical: 16.h,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18.r),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18.r),
-                          borderSide: BorderSide(
-                            color: AppColors.blue100.withValues(alpha: 0.7),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18.r),
-                          borderSide: BorderSide(
-                            color: AppColors.primary,
-                            width: 1.4.w,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: const HomeSearchBar(),
                 ),
               ),
             ),
@@ -268,29 +203,8 @@ class _HomeView extends StatelessWidget {
               child: FadeInUp(
                 delay: Duration(milliseconds: 800),
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(10.r, 20.h, 10.r, 20.h),
-                  child: Container(
-                    height: 220.h,
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          blurRadius: 18.r,
-                          offset: Offset(0, 7.h),
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 4.r,
-                          offset: Offset(0, 2.h),
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(15.r),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/img/homeBanner.png'),
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                  ),
+                  padding: EdgeInsets.fromLTRB(4.r, 20.h, 4.r, 20.h),
+                  child: BannerCarousel(height: 180.h),
                 ),
               ),
             ),
@@ -403,7 +317,14 @@ class _HomeView extends StatelessWidget {
             onTap: () {
               context.pushNamed(
                 'productDetailsPage',
-                extra: material.specifications,
+                extra: ProductDetailsArgs(
+                  name: material.name,
+                  price: material.consumerPriceLabel,
+                  image: material.image ?? '',
+                  desc: material.description,
+                  category: material.categoryName,
+                  specifications: material.specifications,
+                ),
               );
             },
           ),

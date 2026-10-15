@@ -9,7 +9,7 @@ abstract class FeaturedMaterialsRepository {
     int? page,
     int? pageSize,
     int? category,
-    String? company,
+    int? companyId,
     bool? isActive,
     String? search,
     String? ordering,

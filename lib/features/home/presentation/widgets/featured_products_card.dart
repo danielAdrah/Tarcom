@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../domain/entities/featured_material_entity.dart';
@@ -149,7 +150,7 @@ class _FeaturedProCardState extends State<FeaturedProCard> {
                               child: Padding(
                                 padding: EdgeInsetsDirectional.only(start: 8.w),
                                 child: Text(
-                                  material.company,
+                                  material.companyName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   textDirection: TextDirection.ltr,
@@ -187,31 +188,20 @@ class _FeaturedProCardState extends State<FeaturedProCard> {
       fit: BoxFit.contain,
       fadeInDuration: const Duration(milliseconds: 250),
       fadeInCurve: Curves.easeOutCubic,
-      placeholder: (context, url) => _imagePlaceholder(isLoading: true),
+      placeholder: (context, url) => const _ImageShimmer(),
       errorWidget: (context, url, error) => _imagePlaceholder(),
     );
   }
 
-  Widget _imagePlaceholder({bool isLoading = false}) {
+  Widget _imagePlaceholder() {
     return Container(
       color: AppColors.blue50,
       child: Center(
-        child: isLoading
-            ? _LoadingPulse(
-                child: SizedBox(
-                  width: 24.w,
-                  height: 24.w,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: AppColors.primary,
-                  ),
-                ),
-              )
-            : Icon(
-                Icons.inventory_2_outlined,
-                size: 36.w,
-                color: AppColors.blue100,
-              ),
+        child: Icon(
+          Icons.inventory_2_outlined,
+          size: 36.w,
+          color: AppColors.blue100,
+        ),
       ),
     );
   }
@@ -224,44 +214,26 @@ class _FeaturedProCardState extends State<FeaturedProCard> {
   }
 }
 
-/// نبض خفيف أثناء تحميل الصورة من الكاش/الشبكة.
-class _LoadingPulse extends StatefulWidget {
-  const _LoadingPulse({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_LoadingPulse> createState() => _LoadingPulseState();
-}
-
-class _LoadingPulseState extends State<_LoadingPulse>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-
-    _animation = Tween<double>(
-      begin: 0.45,
-      end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+/// تأثير shimmer أثناء تحميل الصورة من الكاش/الشبكة.
+class _ImageShimmer extends StatelessWidget {
+  const _ImageShimmer();
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(opacity: _animation, child: widget.child);
+    return Shimmer.fromColors(
+      baseColor: AppColors.skeletonBase,
+      highlightColor: AppColors.skeletonHighlight,
+      child: Container(
+        color: Colors.white.withValues(alpha: 0.55),
+        child: Center(
+          child: Icon(
+            Icons.inventory_2_outlined,
+            size: 36.w,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
   }
 }
 

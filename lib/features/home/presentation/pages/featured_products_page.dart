@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../products/presentation/pages/product_details_page.dart';
 import '../bloc/get_featured_materials/get_featured_materials_bloc.dart';
 import '../widgets/featured_products_card.dart';
 import '../widgets/featured_product_shimmer_card.dart';
@@ -317,7 +318,14 @@ class _FeaturedProductsViewState extends State<_FeaturedProductsView> {
                   onTap: () {
                     context.pushNamed(
                       'productDetailsPage',
-                      extra: material.specifications,
+                      extra: ProductDetailsArgs(
+                        name: material.name,
+                        price: material.consumerPriceLabel,
+                        image: material.image ?? '',
+                        desc: material.description,
+                        category: material.categoryName,
+                        specifications: material.specifications,
+                      ),
                     );
                   },
                 ),

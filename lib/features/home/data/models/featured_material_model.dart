@@ -1,5 +1,6 @@
 import '../../domain/entities/featured_material_entity.dart';
 import 'category_detail_model.dart';
+import 'company_detail_model.dart';
 import 'uom_detail_model.dart';
 
 class FeaturedMaterialModel extends FeaturedMaterialEntity {
@@ -17,7 +18,8 @@ class FeaturedMaterialModel extends FeaturedMaterialEntity {
     required super.uom,
     required super.uomName,
     required super.uomDetail,
-    required super.company,
+    required super.companyId,
+    required super.companyDetail,
     required super.supplierPrice,
     required super.consumerPrice,
     required super.isActive,
@@ -63,7 +65,13 @@ class FeaturedMaterialModel extends FeaturedMaterialEntity {
       uomDetail: json['uom_detail'] is Map<String, dynamic>
           ? UomDetailModel.fromJson(json['uom_detail'] as Map<String, dynamic>)
           : null,
-      company: json['company'] as String? ?? '',
+      // `company` صار معرّف الشركة (int)؛ نقرأه بمرونة لتحمل أي شكل قديم.
+      companyId: (json['company'] as num?)?.toInt(),
+      companyDetail: json['company_detail'] is Map<String, dynamic>
+          ? CompanyDetailModel.fromJson(
+              json['company_detail'] as Map<String, dynamic>,
+            )
+          : null,
       supplierPrice: _parsePrice(json['supplier_price']),
       consumerPrice: _parsePrice(json['consumer_price']),
       isActive: json['is_active'] as bool? ?? false,

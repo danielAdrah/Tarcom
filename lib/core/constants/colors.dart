@@ -51,6 +51,13 @@ class AppColors {
   static const Color border = Color(0xFFE4E7EC);
   static const Color divider = Color(0xFFEAECF0);
 
+  // ---------------------------------------------------------------------------
+  // Skeleton / Shimmer (loading placeholders)
+  // ---------------------------------------------------------------------------
+
+  static const Color skeletonBase = Color(0xFFDCE5EF);
+  static const Color skeletonHighlight = Color(0xFFF5F9FD);
+
   static const Color black = Color(0xFF000000);
 
   // ---------------------------------------------------------------------------

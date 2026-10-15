@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../domain/entities/category_entity.dart';
@@ -28,6 +30,8 @@ class CategoryCell extends StatelessWidget {
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(color: AppColors.border),
             boxShadow: [
+              //because of the shadow the card is not in plain white so the image bg is visiable
+              //we can remove the shadow to make the card plain white
               BoxShadow(
                 color: AppColors.primary.withValues(alpha: 0.06),
                 blurRadius: 12.r,
@@ -94,19 +98,20 @@ class CategoryCell extends StatelessWidget {
       return _imageFallback();
     }
 
-    return Image.network(
-      imageUrl,
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
       width: 140.w,
       height: 140.h,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
+      placeholder: (context, url) => _ImageShimmer(),
+      errorWidget: (context, url, error) {
         if (imageUrl != category.icon && category.icon.isNotEmpty) {
-          return Image.network(
-            category.icon,
+          return CachedNetworkImage(
+            imageUrl: category.icon,
             width: 140.w,
             height: 140.h,
             fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => _imageFallback(),
+            errorWidget: (_, _, _) => _imageFallback(),
           );
         }
 
@@ -120,6 +125,28 @@ class CategoryCell extends StatelessWidget {
       Icons.image_not_supported_outlined,
       size: 42.w,
       color: AppColors.textSecondary,
+    );
+  }
+}
+
+class _ImageShimmer extends StatelessWidget {
+  const _ImageShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.skeletonBase,
+      highlightColor: AppColors.skeletonHighlight,
+      child: Container(
+        color: Colors.white.withValues(alpha: 0.55),
+        child: Center(
+          child: Icon(
+            Icons.inventory_2_outlined,
+            size: 36.w,
+            color: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 }

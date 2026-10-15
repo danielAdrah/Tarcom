@@ -1,4 +1,5 @@
 import 'route_imports.dart';
+import '../../features/products/domain/entities/category_entity.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
@@ -51,8 +52,19 @@ final GoRouter router = GoRouter(
       path: '/productsPage',
       name: 'productsPage',
       builder: (context, state) {
-        final String proCategory = state.extra as String;
-        return ProductsPage(productsCatTitle: proCategory);
+        final extra = state.extra;
+
+        // التدفق الأساسي: كائن بيانات الصفحة (معرّفات الفئة والشركة) من صفحة الشركات.
+        if (extra is ProductsPageArgs) {
+          return ProductsPage(args: extra);
+        }
+
+        // دعم قديم: اسم الفئة فقط كنص بدون معرّفات.
+        if (extra is String) {
+          return ProductsPage(args: ProductsPageArgs(categoryName: extra));
+        }
+
+        return const ProductsPage(args: ProductsPageArgs());
       },
     ),
 
@@ -60,21 +72,76 @@ final GoRouter router = GoRouter(
       path: '/productDetailsPage',
       name: 'productDetailsPage',
       builder: (context, state) {
-        final specifications = state.extra;
-        if (specifications is List<MapEntry<String, String>>) {
-          return ProductDetailsPage(specifications: specifications);
+        final extra = state.extra;
+
+        // الحالة المعتادة: كائن بيانات المنتج الكامل من القوائم.
+        if (extra is ProductDetailsArgs) {
+          return ProductDetailsPage(
+            proName: extra.name,
+            proPrice: extra.price,
+            proImage: extra.image,
+            proDesc: extra.desc,
+            proCategory: extra.category,
+            specifications: extra.specifications,
+          );
         }
-        return const ProductDetailsPage();
+
+        // دعم قديم: قائمة مواصفات فقط.
+        if (extra is List<MapEntry<String, String>>) {
+          return ProductDetailsPage(
+            proName: '',
+            proPrice: '',
+            proImage: '',
+            proDesc: '',
+            proCategory: '',
+            specifications: extra,
+          );
+        }
+
+        // بدون بيانات: عرض صفحة فارغة بدلاً من الحدوث خطأ نوع.
+        return const ProductDetailsPage(
+          proName: '',
+          proPrice: '',
+          proImage: '',
+          proDesc: '',
+          proCategory: '',
+        );
       },
     ),
     GoRoute(
       path: '/productsCompanyPage',
       name: 'productsCompanyPage',
       builder: (context, state) {
-        final String catagoryTitle = state.extra as String;
-        return ProductsCompanyPage(catagoryTitle: catagoryTitle);
+        final extra = state.extra;
+
+        // التدفق الأساسي: كائن الفئة من صفحة الفئات، للفلترة بمعرّفها.
+        if (extra is CategoryEntity) {
+          return ProductsCompanyPage(category: extra);
+        }
+
+        // دعم الصفحة الرئيسية: اسم الفئة فقط بدون معرّف.
+        if (extra is String) {
+          return ProductsCompanyPage(categoryTitle: extra);
+        }
+
+        // بدون بيانات: عرض كل الشركات بدلاً من حدوث خطأ نوع.
+        return const ProductsCompanyPage();
       },
-      // => const ProductsCompanyPage(),
+    ),
+    GoRoute(
+      path: '/searchResultsPage',
+      name: 'searchResultsPage',
+      builder: (context, state) {
+        final extra = state.extra;
+
+        // التدفق الأساسي: نص البحث كنص من شريط البحث في الرئيسية.
+        if (extra is String && extra.trim().isNotEmpty) {
+          return SearchResultsPage(query: extra.trim());
+        }
+
+        // احتياط: نص فارغ يعرض صفحة نتائج برأس فارغ بدلاً من خطأ نوع.
+        return SearchResultsPage(query: extra is String ? extra : '');
+      },
     ),
   ],
 );

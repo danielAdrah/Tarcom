@@ -119,7 +119,6 @@ class _ProductsCategoryView extends StatelessWidget {
           return CategoryCell(
             category: category,
             onTap: () {
-              //we need to change the product company page later so it takes the category object not just a string
               context.pushNamed('productsCompanyPage', extra: category);
             },
           );

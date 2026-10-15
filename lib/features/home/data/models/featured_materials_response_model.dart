@@ -19,9 +19,8 @@ class FeaturedMaterialsResponseModel extends FeaturedMaterialsResponseEntity {
       previous: json['previous'] as String?,
       results: resultsJson
           .map(
-            (item) => FeaturedMaterialModel.fromJson(
-              item as Map<String, dynamic>,
-            ),
+            (item) =>
+                FeaturedMaterialModel.fromJson(item as Map<String, dynamic>),
           )
           .toList()
           .cast<FeaturedMaterialEntity>(),

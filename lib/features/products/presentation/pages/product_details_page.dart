@@ -1,13 +1,38 @@
 import 'package:animate_do/animate_do.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/routes/route_imports.dart';
 
+/// بيانات المنتج التي تمرَّر عبر الـ route extra من القوائم إلى صفحة التفاصيل.
+class ProductDetailsArgs {
+  const ProductDetailsArgs({
+    required this.name,
+    required this.price,
+    required this.image,
+    required this.desc,
+    required this.category,
+    this.specifications = const [],
+  });
+
+  final String name;
+  final String price;
+  final String image;
+  final String desc;
+  final String category;
+  final List<MapEntry<String, String>> specifications;
+}
+
 class ProductDetailsPage extends StatefulWidget {
   const ProductDetailsPage({
     super.key,
+    required this.proName,
+    required this.proPrice,
+    required this.proImage,
+    required this.proDesc,
+    required this.proCategory,
     this.specifications = const [
       MapEntry('المعالج', 'Core i5 13 H'),
       MapEntry('الرام', '16G DDR5'),
@@ -18,6 +43,11 @@ class ProductDetailsPage extends StatefulWidget {
   });
 
   final List<MapEntry<String, String>> specifications;
+  final String proName;
+  final String proPrice;
+  final String proImage;
+  final String proDesc;
+  final String proCategory;
 
   @override
   State<ProductDetailsPage> createState() => _ProductDetailsPageState();
@@ -102,24 +132,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     color: AppColors.surface.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Center(
-                    child: Image.asset(
-                      //later we will fetch the image from the api
-                      'assets/img/p1.png',
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.contain,
-                      alignment: Alignment.center,
-                      filterQuality: FilterQuality.high,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.image_not_supported_outlined,
-                          size: 42.r,
-                          color: AppColors.textSecondary,
-                        );
-                      },
-                    ),
-                  ),
+                  child: Center(child: _buildProductImage()),
                 ),
               ),
 
@@ -136,27 +149,29 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     children: [
                       //product title
                       Text(
-                        'Asus Tuf A15',
+                        widget.proName.isNotEmpty ? widget.proName : 'منتج',
                         style: textTheme.displaySmall?.copyWith(
                           color: const Color.fromARGB(255, 82, 90, 105),
                         ),
                       ),
                       //product category
-                      Text(
-                        'لابتوبات',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textPrimary,
+                      if (widget.proCategory.isNotEmpty)
+                        Text(
+                          widget.proCategory,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      ),
                       SizedBox(height: 10.h),
                       //product price
-                      Text(
-                        '800\$',
-                        style: textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.secondary,
+                      if (widget.proPrice.isNotEmpty)
+                        Text(
+                          '${widget.proPrice}\$',
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.secondary,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -189,7 +204,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         ),
                       ),
                       Text(
-                        'لابتوب غيمينغ قوي ممتاز للألعاب الثقيلة و البرامج الهندسية المتطلبة , يأتي بمعالج Core i5',
+                        widget.proDesc.isNotEmpty
+                            ? widget.proDesc
+                            : 'لا يوجد وصف متاح لهذا المنتج.',
                         style: textTheme.bodyMedium,
                       ),
                     ],
@@ -218,6 +235,53 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  // الصورة: رابط من الـ API أو أصل محلي من الأصول، مع معالجة الأخطاء.
+  Widget _buildProductImage() {
+    final image = widget.proImage;
+
+    if (image.isEmpty) {
+      return _imageFallback();
+    }
+
+    if (image.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: image,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.contain,
+        alignment: Alignment.center,
+        fadeInDuration: const Duration(milliseconds: 250),
+        placeholder: (context, url) => SizedBox(
+          width: 28.r,
+          height: 28.r,
+          child: const CircularProgressIndicator(
+            strokeWidth: 2.5,
+            color: AppColors.primary,
+          ),
+        ),
+        errorWidget: (context, url, error) => _imageFallback(),
+      );
+    }
+
+    return Image.asset(
+      image,
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.contain,
+      alignment: Alignment.center,
+      filterQuality: FilterQuality.high,
+      errorBuilder: (context, error, stackTrace) => _imageFallback(),
+    );
+  }
+
+  Widget _imageFallback() {
+    return Icon(
+      Icons.image_not_supported_outlined,
+      size: 42.r,
+      color: AppColors.textSecondary,
     );
   }
 

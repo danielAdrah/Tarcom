@@ -1,4 +1,5 @@
 import 'category_detail_entity.dart';
+import 'company_detail_entity.dart';
 import 'uom_detail_entity.dart';
 
 /// سبب تمييز المادة من الـ API: `OFFER` | `LIMITED_TIME` | `SPECIAL`.
@@ -34,7 +35,10 @@ class FeaturedMaterialEntity {
   final int uom;
   final String uomName;
   final UomDetailEntity? uomDetail;
-  final String company;
+
+  /// معرّف الشركة (FK) كما يرجعه الـ API في حقل `company`.
+  final int? companyId;
+  final CompanyDetailEntity? companyDetail;
   final double supplierPrice;
   final double consumerPrice;
   final bool isActive;
@@ -72,7 +76,8 @@ class FeaturedMaterialEntity {
     required this.uom,
     required this.uomName,
     required this.uomDetail,
-    required this.company,
+    required this.companyId,
+    required this.companyDetail,
     required this.supplierPrice,
     required this.consumerPrice,
     required this.isActive,
@@ -99,6 +104,15 @@ class FeaturedMaterialEntity {
 
   /// أول صورة متوفرة للمادة (أو null إذا لم تكن هناك صور).
   String? get image => image1 ?? image2 ?? image3 ?? image4 ?? image5;
+
+  /// اسم الشركة للعرض؛ الـ API لا يرجع `company_name`، بل `company_detail`.
+  String get companyName => companyDetail?.name ?? '';
+
+  /// سعر المستهلك بصيغة نصية مناسبة للعرض (بدون كسور إذا كان صحيحاً).
+  String get consumerPriceLabel =>
+      consumerPrice == consumerPrice.roundToDouble()
+      ? consumerPrice.toStringAsFixed(0)
+      : consumerPrice.toStringAsFixed(2);
 
   /// الأزواج (اسم/قيمة) للمواصفات غير الفارغة، جاهزة لعرضها في صفحة التفاصيل.
   List<MapEntry<String, String>> get specifications {
