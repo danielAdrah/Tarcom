@@ -3,7 +3,7 @@ class CategoryEntity {
   final String name;
   final String nameEn;
   final String nameAr;
-  final String icon;
+  final String internalName;
   final String image;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -13,7 +13,7 @@ class CategoryEntity {
     required this.name,
     required this.nameEn,
     required this.nameAr,
-    required this.icon,
+    required this.internalName,
     required this.image,
     required this.createdAt,
     required this.updatedAt,

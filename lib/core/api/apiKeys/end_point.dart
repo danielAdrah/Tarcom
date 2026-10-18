@@ -5,6 +5,8 @@ class EndPoint {
 
   static const String signUp = 'auth/signup/';
   static const String signIn = 'auth/login/';
+  static const String logout = 'auth/logout/';
+  static const String refreshToken = 'auth/token/refresh/';
   static const String verifyOtp = 'auth/verify-otp/';
   static const String getCategories = 'categories/';
   static const String getFeaturedMaterials = 'features/';
@@ -17,4 +19,11 @@ class EndPoint {
 
   // Banners (لافتات الموقع)
   static const String getBanners = 'banners/';
+
+  // Contact (معلومات التواصل)
+  static const String getContactInfo = 'contact/info/';
+
+  // Profile (الملف الشخصي للمستخدم الموثّق)
+  static const String getUserProfile = 'users/me/';
+  static const String updateUserProfile = 'users/me/';
 }

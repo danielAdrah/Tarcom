@@ -6,6 +6,11 @@ final GoRouter router = GoRouter(
   routes: <RouteBase>[
     GoRoute(path: '/', builder: (context, state) => const LoadingPage()),
     GoRoute(
+      path: '/noInternetPage',
+      name: 'noInternetPage',
+      builder: (context, state) => const NoInternetPage(),
+    ),
+    GoRoute(
       path: '/signUpPage',
       name: 'signUpPage',
       builder: (context, state) => const SignUpPage(),
@@ -127,6 +132,11 @@ final GoRouter router = GoRouter(
         // بدون بيانات: عرض كل الشركات بدلاً من حدوث خطأ نوع.
         return const ProductsCompanyPage();
       },
+    ),
+    GoRoute(
+      path: '/userProfilePage',
+      name: 'userProfilePage',
+      builder: (context, state) => const UserProfilePage(),
     ),
     GoRoute(
       path: '/searchResultsPage',

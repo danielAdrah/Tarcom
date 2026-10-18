@@ -2,6 +2,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/routes/route_imports.dart';
@@ -93,33 +94,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   ),
                 ),
                 centerTitle: true,
-                actions: [
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(end: 16.w),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14.r),
-                      ),
-                      child: IconButton(
-                        onPressed: () =>
-                            setState(() => _isFavorite = !_isFavorite),
-                        tooltip: _isFavorite
-                            ? 'إزالة من المفضلة'
-                            : 'إضافة إلى المفضلة',
-                        icon: Icon(
-                          _isFavorite
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
-                        ),
-                        color: _isFavorite
-                            ? AppColors.secondary
-                            : AppColors.primary,
-                        iconSize: 21.r,
-                      ),
-                    ),
-                  ),
-                ],
               ),
               //Product image
               SliverToBoxAdapter(
@@ -238,6 +212,22 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     );
   }
 
+  /// بديل shimmer أثناء تحميل الصورة من الكاش/الشبكة.
+  Widget _imageShimmerPlaceholder() {
+    return Shimmer.fromColors(
+      baseColor: AppColors.skeletonBase,
+      highlightColor: AppColors.skeletonHighlight,
+      child: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+      ),
+    );
+  }
+
   // الصورة: رابط من الـ API أو أصل محلي من الأصول، مع معالجة الأخطاء.
   Widget _buildProductImage() {
     final image = widget.proImage;
@@ -254,14 +244,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         fit: BoxFit.contain,
         alignment: Alignment.center,
         fadeInDuration: const Duration(milliseconds: 250),
-        placeholder: (context, url) => SizedBox(
-          width: 28.r,
-          height: 28.r,
-          child: const CircularProgressIndicator(
-            strokeWidth: 2.5,
-            color: AppColors.primary,
-          ),
-        ),
+        placeholder: (context, url) => _imageShimmerPlaceholder(),
         errorWidget: (context, url, error) => _imageFallback(),
       );
     }

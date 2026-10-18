@@ -91,8 +91,8 @@ class CategoryCell extends StatelessWidget {
   }
 
   Widget _buildCategoryImage() {
-    //here first it checks if the category has an image, if not it uses the icon, and if both are empty it shows a fallback icon
-    final imageUrl = category.image.isNotEmpty ? category.image : category.icon;
+    //if the category has no image it shows a fallback icon
+    final imageUrl = category.image;
 
     if (imageUrl.isEmpty) {
       return _imageFallback();
@@ -104,19 +104,7 @@ class CategoryCell extends StatelessWidget {
       height: 140.h,
       fit: BoxFit.contain,
       placeholder: (context, url) => _ImageShimmer(),
-      errorWidget: (context, url, error) {
-        if (imageUrl != category.icon && category.icon.isNotEmpty) {
-          return CachedNetworkImage(
-            imageUrl: category.icon,
-            width: 140.w,
-            height: 140.h,
-            fit: BoxFit.contain,
-            errorWidget: (_, _, _) => _imageFallback(),
-          );
-        }
-
-        return _imageFallback();
-      },
+      errorWidget: (context, url, error) => _imageFallback(),
     );
   }
 

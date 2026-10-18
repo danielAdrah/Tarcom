@@ -1,11 +1,13 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:lottie/lottie.dart';
 
-import '../api/apiKeys/store_keys.dart';
+import '../di/injection_container.dart';
+import '../services/auth_route_resolver.dart';
+import '../services/connectivity_service.dart';
 
 class LoadingPage extends StatefulWidget {
   const LoadingPage({super.key});
@@ -21,32 +23,22 @@ class _LoadingPageState extends State<LoadingPage> {
     _resolveAuthRoute();
   }
 
-  /// Checks whether the user has a previously stored session (valid tokens)
-  /// and navigates to the appropriate route once the loading animation ends.
+  /// Once the loading animation ends, verifies connectivity and then either
+  /// resumes the authentication flow (online) or interrupts it with the
+  /// "No Internet Connection" screen (offline).
   Future<void> _resolveAuthRoute() async {
-    // Determine the destination while the loading animation is playing.
-    final bool isLoggedIn = _hasValidSession();
-
     // Keep the splash visible for its intended duration before navigating.
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
-    if (isLoggedIn) {
-      context.goNamed('mainNavBar');
-    } else {
-      context.goNamed('signInPage');
-    }
-  }
+    final bool isOnline = await sl<ConnectivityService>().isOnline();
+    if (!mounted) return;
 
-  /// Returns true when non-empty access & refresh tokens exist in storage.
-  bool _hasValidSession() {
-    final box = GetStorage();
-    final String? accessToken = box.read<String>(StorageKeys.accessToken);
-    final String? refreshToken = box.read<String>(StorageKeys.refreshToken);
-    return accessToken != null &&
-        accessToken.isNotEmpty &&
-        refreshToken != null &&
-        refreshToken.isNotEmpty;
+    if (isOnline) {
+      AuthRouteResolver.goNext(context);
+    } else {
+      context.goNamed('noInternetPage');
+    }
   }
 
   @override
@@ -85,11 +77,12 @@ class _LoadingPageState extends State<LoadingPage> {
                     style: textTheme.headlineSmall,
                   ),
                 ),
-                SizedBox(height: 70.h),
+                SizedBox(height: 50.h),
                 ZoomIn(
                   delay: Duration(milliseconds: 800),
-                  child: CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.primary,
+                  child: SpinKitChasingDots(
+                    color: Theme.of(context).primaryColor,
+                    size: 50.w,
                   ),
                 ),
               ],

@@ -1,5 +1,6 @@
 import 'package:tarcom/features/auth/domain/entities/verify_otp_response_entity.dart';
 
+import '../../domain/entities/auth_tokens_entity.dart';
 import '../../domain/entities/sign_in_response_entity.dart';
 import '../../domain/entities/sign_up_entity.dart';
 import '../../domain/repostories/auth_repo.dart';
@@ -60,6 +61,28 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       return await remoteDataSource.signIn(email: email, password: password);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  //method log out
+
+  @override
+  Future<void> logout() async {
+    try {
+      await remoteDataSource.logout();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  //method refresh access token
+
+  @override
+  Future<AuthTokensEntity> refreshToken() async {
+    try {
+      return await remoteDataSource.refreshToken();
     } catch (e) {
       rethrow;
     }

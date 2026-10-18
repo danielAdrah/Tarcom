@@ -1,8 +1,12 @@
+import 'dart:developer' as developer;
+
 import 'package:get_storage/get_storage.dart';
 
 import '../../../../core/api/apiKeys/end_point.dart';
 import '../../../../core/api/apiKeys/store_keys.dart';
+import '../../../../core/api/errors/api_excptions.dart';
 import '../../../../core/api/network/api_client.dart';
+import '../models/auth_tokens_model.dart';
 import '../models/sign_in_response_model.dart';
 import '../models/sign_up_response_model.dart';
 import '../models/verify_otp_response_model.dart';
@@ -31,6 +35,12 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
   });
+
+  //log out method: blacklist the refresh token then clear the local session
+  Future<void> logout();
+
+  //refresh method: exchange the stored refresh token for a new access token
+  Future<AuthTokensModel> refreshToken();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -112,12 +122,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: {'Accept-Language': 'ar'},
       );
 
-      final signInResponse = SignInResponseModel.fromJson(response);
+      late final SignInResponseModel signInResponse;
+      try {
+        signInResponse = SignInResponseModel.fromJson(response);
+      } catch (e, s) {
+        developer.log(
+          'signIn model parse failed [${e.runtimeType}]',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: s,
+        );
+        rethrow;
+      }
       //get the tokens
       final String accessToken = signInResponse.tokens.access;
       final String refreshToken = signInResponse.tokens.refresh;
 
-      print("================ $accessToken");
+      developer.log(
+        'signIn success, token acquired',
+        name: 'AuthRemoteDataSource',
+      );
 
       //store the tokens
       await storage.write(StorageKeys.accessToken, accessToken);
@@ -127,6 +151,74 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return signInResponse;
     } catch (e) {
       rethrow;
+    }
+  }
+
+  //refresh method implementation
+  @override
+  Future<AuthTokensModel> refreshToken() async {
+    // نقرأ رمز التحديث المخزّن لتبادل رمز وصول جديد به.
+    final String refreshToken =
+        storage.read<String>(StorageKeys.refreshToken) ?? '';
+
+    if (refreshToken.isEmpty) {
+      developer.log(
+        'refresh skipped: no refresh token stored',
+        name: 'AuthRemoteDataSource',
+      );
+      throw UnauthorizedException(message: 'لا توجد جلسة قابلة للتحديث.');
+    }
+
+    // الطلب يمر عبر ApiClient؛ عند إعادة 401 (رمز التحديث منتهي) لن يحاول
+    // ApiClient التحديث مرة أخرى بفضل حارس _isRefreshing، فيُرمى الاستثناء
+    // إلى الأعلى لتعالجه الطبقة التقديمية بإخراج المستخدم قسراً.
+    final response = await apiClient.post(
+      EndPoint.refreshToken,
+      body: {'refresh': refreshToken},
+      headers: {'Accept-Language': 'ar'},
+    );
+
+    final AuthTokensModel tokens = AuthTokensModel.fromJson(response);
+
+    // نخزّن رمز الوصول الجديد دائماً، ورمز التحديث الجديد فقط إذا أعاده
+    // الخادم (بعض الإعدادات لا تدوّر رمز التحديث).
+    await storage.write(StorageKeys.accessToken, tokens.access);
+    if (tokens.refresh.isNotEmpty) {
+      await storage.write(StorageKeys.refreshToken, tokens.refresh);
+    }
+
+    developer.log(
+      'access token refreshed successfully',
+      name: 'AuthRemoteDataSource',
+    );
+
+    return tokens;
+  }
+
+  //log out method implementation
+  @override
+  Future<void> logout() async {
+    // نقرأ رمز التحديث من المخزن المحلي لمحاولة إدراجه في القائمة السوداء.
+    final String refreshToken =
+        storage.read<String>(StorageKeys.refreshToken) ?? '';
+
+    try {
+      if (refreshToken.isNotEmpty) {
+        await apiClient.post(
+          EndPoint.logout,
+          body: {'refresh': refreshToken},
+          headers: {'Accept-Language': 'ar'},
+        );
+      }
+      developer.log(
+        'logout success, session cleared',
+        name: 'AuthRemoteDataSource',
+      );
+    } finally {
+      // نمسح الجلسة المحلية دائماً لضمان إنهاء دخول المستخدم حتى لو فشل
+      // إدراج الرمز في القائمة السوداء (انقطاع شبكة أو رمز منتهي الصلاحية).
+      await storage.remove(StorageKeys.accessToken);
+      await storage.remove(StorageKeys.refreshToken);
     }
   }
 }

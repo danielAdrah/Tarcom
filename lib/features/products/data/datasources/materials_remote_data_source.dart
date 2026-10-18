@@ -1,6 +1,11 @@
+import 'dart:developer' as developer;
+
 import '../../../../core/api/apiKeys/end_point.dart';
 import '../../../../core/api/network/api_client.dart';
 import '../models/materials_response_model.dart';
+
+/// اسم موحّد لسجلات الترقيم، لسهولة تصفيتها عبر `flutter logs`.
+const String _paginationLog = 'Pagination';
 
 abstract class MaterialsRemoteDataSource {
   Future<MaterialsResponseModel> getMaterials({
@@ -76,12 +81,50 @@ class MaterialsRemoteDataSourceImpl implements MaterialsRemoteDataSource {
       'page_size': ?pageSize,
     };
 
+    //==-=-=-=-=-= سجلات الترقيم: الطلب الصادر ومعاملاته.
+    developer.log(
+      'REQUEST  -> page=$page page_size=$pageSize params=$queryParameters',
+      name: _paginationLog,
+    );
+
     final response = await apiClient.get(
       EndPoint.getMaterials,
       queryParameters: queryParameters,
       headers: {'Accept-Language': 'ar'},
     );
 
-    return MaterialsResponseModel.fromJson(response);
+    final model = MaterialsResponseModel.fromJson(response);
+
+    final nextLabel = model.next == null ? 'null' : 'PRESENT';
+    final previousLabel = model.previous == null ? 'null' : 'PRESENT';
+
+    //==-=-=-=-=-= سجلات الترقيم: الاستجابة الواردة وغلاف الترقيم.
+    developer.log(
+      'RESPONSE <- page=$page count=${model.count} '
+      'results=${model.results.length} '
+      'next=$nextLabel previous=$previousLabel',
+      name: _paginationLog,
+    );
+
+    // الخادم تجاهل `page_size`؟ (يدلّل على أن الترقيم غير فعّال من الجهة الخدمية).
+    if (pageSize != null && model.results.length > pageSize) {
+      developer.log(
+        'WARNING  page_size IGNORED by API: asked=$pageSize got=${model.results.length}',
+        name: _paginationLog,
+      );
+    }
+
+    // `count` أكبر من المعروض مع `next == null` → احتمال تحميل لا ينتهي.
+    if (model.next == null && model.results.isNotEmpty) {
+      final size = pageSize ?? model.results.length;
+      final expectedPages = (model.count / size).ceil();
+      developer.log(
+        'LAST PAGE  next=null with count=${model.count}; '
+        'at page_size=$size that is ~$expectedPages page(s)',
+        name: _paginationLog,
+      );
+    }
+
+    return model;
   }
 }

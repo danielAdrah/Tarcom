@@ -67,6 +67,7 @@ class _SignInPageState extends State<SignInPage> {
           },
           builder: (context, state) {
             return Scaffold(
+              backgroundColor: Colors.transparent,
               body: SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,

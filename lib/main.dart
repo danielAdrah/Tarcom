@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tarcom/core/di/injection_container.dart' as di;
+import 'package:tarcom/core/services/session_controller.dart';
 import 'package:tarcom/features/auth/presentation/bloc/verify_otp/bloc/verify_otp_bloc.dart';
 // import 'core/di/injection_container.dart';
 import 'core/routes/route_main.dart';
@@ -21,8 +23,43 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // مفتاح عالمي لعرض رسالة انتهاء الجلسة فوق أي صفحة.
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+
+  late final SessionController _sessionController;
+  StreamSubscription<String>? _sessionSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionController = di.sl<SessionController>();
+    // عند فشل تحديث الرمز ينهي SessionController الجلسة محلياً ويبثّ الحدث
+    // هنا؛ فنوجّه المستخدم إجبارياً لصفحة الدخول مع رسالة توضيحية.
+    _sessionSub = _sessionController.onExpired.listen((message) {
+      router.goNamed('signInPage');
+      final messenger = _scaffoldMessengerKey.currentState;
+      messenger
+        ?..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        );
+    });
+  }
+
+  @override
+  void dispose() {
+    _sessionSub?.cancel();
+    super.dispose();
+  }
 
   // This widget is the root of your application.
   @override
@@ -40,6 +77,7 @@ class MyApp extends StatelessWidget {
           BlocProvider(create: (context) => di.sl<GetFeaturedMaterialsBloc>()),
         ],
         child: MaterialApp.router(
+          scaffoldMessengerKey: _scaffoldMessengerKey,
           routerConfig: router,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,

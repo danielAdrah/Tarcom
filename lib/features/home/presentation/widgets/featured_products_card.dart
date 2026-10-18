@@ -313,9 +313,9 @@ class _FeatureBadge extends StatelessWidget {
   Color get _color {
     switch (reason) {
       case FeatureReason.offer:
-        return AppColors.secondary;
+        return AppColors.success;
       case FeatureReason.limitedTime:
-        return AppColors.warning;
+        return const Color.fromARGB(255, 245, 27, 11);
       case FeatureReason.special:
         return AppColors.primary;
       case FeatureReason.unknown:

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -8,6 +9,13 @@ import '../apiKeys/end_point.dart';
 import '../apiKeys/store_keys.dart';
 import '../errors/api_excptions.dart';
 
+/// يُرجع true إذا نجح تحديث رمز الوصول (وتم تخزينه)، وfalse إذا تعذّر ذلك
+/// (رمز تحديث منتهي أو غير موجود) فتُنهى الجلسة قسراً.
+typedef TokenRefreshCallback = Future<bool> Function();
+
+/// يُستدعى عند فشل تحديث الرمز لإنهاء الجلسة محلياً وتوجيه المستخدم للدخول.
+typedef AuthFailureCallback = void Function();
+
 class ApiClient {
   final http.Client client;
 
@@ -15,36 +23,141 @@ class ApiClient {
   /// للطلبات التي تحتاج توثيقاً دون الحاجة لتمرير الترويسة في كل مكان.
   final GetStorage? storage;
 
+  /// حقن عبر DI لكسر الاعتماد الدائري: ينفّذ منطق التحديث في طبقة الميزات
+  /// دون أن تعتمد `core` على `features` مباشرة.
+  TokenRefreshCallback? onTokenRefresh;
+  AuthFailureCallback? onAuthFailure;
+
+  /// يمنع إعادة محاولة التحديث داخل طلب التحديث نفسه (تجنّب التفاف لا نهائي).
+  bool _isRefreshing = false;
+
+  /// مستقبَل مشترك ليَنتظره جميع الطلبات المتزامنة التي تواجه 401 في المرة
+  /// نفسها، بحيث يُنفَّذ تحديث واحد فقط بدل عدّة تحديثات متكرّرة.
+  Future<bool>? _refreshFuture;
+
   ApiClient(this.client, {this.storage});
+
+  /// ينفّذ الطلب، ويعيد محاولة واحدة تلقائياً بعد تحديث رمز الوصول عند 401.
+  /// إن فشل التحديث، يُنهى الجلسة عبر [onAuthFailure] ثم يُرمى استثناء 401.
+  Future<T> _execute<T>({
+    required String endpoint,
+    required String logLabel,
+    required Future<http.Response> Function() send,
+    required T Function(http.Response) handle,
+  }) async {
+    try {
+      developer.log('$logLabel -> $endpoint', name: 'ApiClient');
+      var response = await send().timeout(const Duration(seconds: 30));
+      developer.log(
+        '$logLabel <- ${response.statusCode} ${response.body}',
+        name: 'ApiClient',
+      );
+
+      // اعتراض 401: حدّث رمز الوصول مرة واحدة ثم أعد الطلب الأصلي بهيدر جديد.
+      if (response.statusCode == 401 &&
+          !_isRefreshing &&
+          onTokenRefresh != null) {
+        final bool refreshed = await _refreshTokenOnce();
+        if (refreshed) {
+          // تُعاد تهيئة الترويسات داخل send() فيُقرأ رمز الوصول الجديد.
+          response = await send().timeout(const Duration(seconds: 30));
+          developer.log(
+            '$logLabel RETRY <- ${response.statusCode} ${response.body}',
+            name: 'ApiClient',
+          );
+        } else {
+          onAuthFailure?.call();
+        }
+      }
+
+      return handle(response);
+    } on TimeoutException {
+      developer.log('$logLabel timeout: $endpoint', name: 'ApiClient');
+      throw const TimeoutException();
+    } on ApiException catch (e) {
+      developer.log(
+        '$logLabel ApiException: $endpoint -> $e',
+        name: 'ApiClient',
+        error: e,
+      );
+      rethrow;
+    } on http.ClientException catch (e, s) {
+      developer.log(
+        '$logLabel ClientException: $endpoint',
+        name: 'ApiClient',
+        error: e,
+        stackTrace: s,
+      );
+      throw const NetworkException();
+    } catch (e, s) {
+      developer.log(
+        '$logLabel UNEXPECTED: $endpoint [${e.runtimeType}]',
+        name: 'ApiClient',
+        error: e,
+        stackTrace: s,
+      );
+      throw UnknownApiException(
+        message: 'حدث خطأ غير متوقع. [${e.runtimeType}]',
+      );
+    }
+  }
+
+  /// يشغّل [onTokenRefresh] مرة واحدة فقط ويشارك النتيجة مع كل النداءات
+  /// المتزامنة. يعيد false عند فشل التحديث أو عدم توفّر نافذة تحديث.
+  Future<bool> _refreshTokenOnce() {
+    return _refreshFuture ??= () async {
+      _isRefreshing = true;
+      try {
+        return await onTokenRefresh!.call();
+      } catch (e, s) {
+        developer.log(
+          'token refresh failed',
+          name: 'ApiClient',
+          error: e,
+          stackTrace: s,
+        );
+        return false;
+      } finally {
+        _isRefreshing = false;
+        _refreshFuture = null;
+      }
+    }();
+  }
 
   // POST request
   Future<Map<String, dynamic>> post(
     String endpoint, {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
-  }) async {
-    try {
-      print("1 from post");
-      final response = await client
-          .post(
-            Uri.parse('${EndPoint.baseUrl}$endpoint'),
-            headers: _buildHeaders(headers),
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(const Duration(seconds: 30));
-      print("2 from post");
-      print("the body is ${response.body}");
+  }) {
+    return _execute(
+      endpoint: endpoint,
+      logLabel: 'POST',
+      send: () => client.post(
+        Uri.parse('${EndPoint.baseUrl}$endpoint'),
+        headers: _buildHeaders(headers),
+        body: body != null ? jsonEncode(body) : null,
+      ),
+      handle: _handleResponse,
+    );
+  }
 
-      return _handleResponse(response);
-    } on TimeoutException {
-      throw const TimeoutException();
-    } on ApiException {
-      rethrow;
-    } on http.ClientException {
-      throw const NetworkException();
-    } catch (e) {
-      throw const UnknownApiException();
-    }
+  // PUT request (تحديث كامل - full update)
+  Future<Map<String, dynamic>> put(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+  }) {
+    return _execute(
+      endpoint: endpoint,
+      logLabel: 'PUT',
+      send: () => client.put(
+        Uri.parse('${EndPoint.baseUrl}$endpoint'),
+        headers: _buildHeaders(headers),
+        body: body != null ? jsonEncode(body) : null,
+      ),
+      handle: _handleResponse,
+    );
   }
 
   //GET request
@@ -52,25 +165,16 @@ class ApiClient {
     String endpoint, {
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
-  }) async {
-    try {
-      final response = await client
-          .get(
-            _buildUri(endpoint, queryParameters),
-            headers: _buildHeaders(headers),
-          )
-          .timeout(const Duration(seconds: 30));
-
-      return _handleResponse(response);
-    } on TimeoutException {
-      throw const TimeoutException();
-    } on ApiException {
-      rethrow;
-    } on http.ClientException {
-      throw const NetworkException();
-    } catch (_) {
-      throw const UnknownApiException();
-    }
+  }) {
+    return _execute(
+      endpoint: endpoint,
+      logLabel: 'GET',
+      send: () => client.get(
+        _buildUri(endpoint, queryParameters),
+        headers: _buildHeaders(headers),
+      ),
+      handle: _handleResponse,
+    );
   }
 
   //GET request whose payload is a plain JSON array (not paginated).
@@ -78,25 +182,16 @@ class ApiClient {
     String endpoint, {
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
-  }) async {
-    try {
-      final response = await client
-          .get(
-            _buildUri(endpoint, queryParameters),
-            headers: _buildHeaders(headers),
-          )
-          .timeout(const Duration(seconds: 30));
-
-      return _handleListResponse(response);
-    } on TimeoutException {
-      throw const TimeoutException();
-    } on ApiException {
-      rethrow;
-    } on http.ClientException {
-      throw const NetworkException();
-    } catch (_) {
-      throw const UnknownApiException();
-    }
+  }) {
+    return _execute(
+      endpoint: endpoint,
+      logLabel: 'GETLIST',
+      send: () => client.get(
+        _buildUri(endpoint, queryParameters),
+        headers: _buildHeaders(headers),
+      ),
+      handle: _handleListResponse,
+    );
   }
 
   Uri _buildUri(String endpoint, Map<String, dynamic>? queryParameters) {

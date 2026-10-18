@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 
@@ -8,6 +10,9 @@ import '../../../domain/usecases/get_materials_use_case.dart';
 
 part 'get_materials_event.dart';
 part 'get_materials_state.dart';
+
+/// اسم موحّد لسجلات الترقيم (يصفّى عبر `flutter logs --name=Pagination`).
+const String _paginationLog = 'Pagination';
 
 /// BLoC جلب المواد (المنتجات) المفلترة حسب الفئة والشركة، مع بحث وترقيم غير منتهي.
 class GetMaterialsBloc extends Bloc<GetMaterialsEvent, GetMaterialsState> {
@@ -45,6 +50,11 @@ class GetMaterialsBloc extends Bloc<GetMaterialsEvent, GetMaterialsState> {
   }
 
   Future<void> _fetchFirstPage(Emitter<GetMaterialsState> emit) async {
+    developer.log(
+      'BLOC     fetch page=1 (category=${_filter.category} company=${_filter.company} '
+      'search="${_filter.search}" page_size=$_pageSize)',
+      name: _paginationLog,
+    );
     emit(const GetMaterialsLoading());
 
     try {
@@ -52,10 +62,26 @@ class GetMaterialsBloc extends Bloc<GetMaterialsEvent, GetMaterialsState> {
       _currentPage = 1;
       _accumulated = response.results;
       _count = response.count;
-      emit(_successState());
+      final success = _successState();
+      developer.log(
+        'BLOC     page=1 OK: added=${response.results.length} '
+        'accumulated=${_accumulated.length}/$_count hasMore=${success.hasMore}',
+        name: _paginationLog,
+      );
+      emit(success);
     } on ApiException catch (e) {
+      developer.log(
+        'BLOC     page=1 FAILED: ${e.message}',
+        name: _paginationLog,
+        error: e,
+      );
       emit(GetMaterialsFailure(message: e.message, exception: e));
-    } catch (_) {
+    } catch (error) {
+      developer.log(
+        'BLOC     page=1 UNEXPECTED: ${error.runtimeType}',
+        name: _paginationLog,
+        error: error,
+      );
       emit(
         const GetMaterialsFailure(message: 'حدث خطأ غير متوقع. حاول مرة أخرى.'),
       );
@@ -70,8 +96,22 @@ class GetMaterialsBloc extends Bloc<GetMaterialsEvent, GetMaterialsState> {
     if (current is! GetMaterialsSuccess ||
         !current.hasMore ||
         current.isLoadingMore) {
+      final success = current is GetMaterialsSuccess ? current : null;
+      developer.log(
+        'BLOC     loadMore IGNORED: state=${current.runtimeType} '
+        'hasMore=${success?.hasMore} isLoadingMore=${success?.isLoadingMore} '
+        'accumulated=${success?.materials.length ?? _accumulated.length}',
+        name: _paginationLog,
+      );
       return;
     }
+
+    final nextPage = _currentPage + 1;
+    developer.log(
+      'BLOC     loadMore START: page=$nextPage '
+      '(accumulated=${_accumulated.length}/$_count)',
+      name: _paginationLog,
+    );
 
     emit(
       GetMaterialsSuccess(
@@ -83,14 +123,25 @@ class GetMaterialsBloc extends Bloc<GetMaterialsEvent, GetMaterialsState> {
     );
 
     try {
-      final response = await _fetch(page: _currentPage + 1);
+      final response = await _fetch(page: nextPage);
 
-      _currentPage += 1;
+      _currentPage = nextPage;
       _accumulated = [..._accumulated, ...response.results];
       _count = response.count;
 
-      emit(_successState());
+      final success = _successState();
+      developer.log(
+        'BLOC     loadMore DONE: page=$nextPage added=${response.results.length} '
+        'accumulated=${_accumulated.length}/$_count hasMore=${success.hasMore}',
+        name: _paginationLog,
+      );
+      emit(success);
     } on ApiException catch (e) {
+      developer.log(
+        'BLOC     loadMore FAILED: page=$nextPage ${e.message}',
+        name: _paginationLog,
+        error: e,
+      );
       // الحفاظ على النتائج المعروضة مع إظهار خطأ أسفل الشبكة.
       emit(
         GetMaterialsSuccess(
@@ -100,7 +151,12 @@ class GetMaterialsBloc extends Bloc<GetMaterialsEvent, GetMaterialsState> {
           loadMoreError: e.message,
         ),
       );
-    } catch (_) {
+    } catch (error) {
+      developer.log(
+        'BLOC     loadMore UNEXPECTED: page=$nextPage ${error.runtimeType}',
+        name: _paginationLog,
+        error: error,
+      );
       emit(
         GetMaterialsSuccess(
           materials: current.materials,

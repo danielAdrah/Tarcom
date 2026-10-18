@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../profile/presentation/bloc/get_user_profile/get_user_profile_bloc.dart';
 import '../../../products/presentation/pages/product_details_page.dart';
 import '../../domain/entities/featured_material_entity.dart';
 import '../../../search/presentation/cubit/search_cubit.dart';
@@ -32,6 +34,10 @@ class HomePage extends StatelessWidget {
           create: (_) => sl<GetBannersBloc>()..add(const GetBannersRequested()),
         ),
         BlocProvider(create: (_) => sl<SearchCubit>()),
+        BlocProvider(
+          create: (_) =>
+              sl<GetUserProfileBloc>()..add(const GetUserProfileRequested()),
+        ),
       ],
       child: const _HomeView(),
     );
@@ -40,8 +46,6 @@ class HomePage extends StatelessWidget {
 
 class _HomeView extends StatelessWidget {
   const _HomeView();
-
-  final String userName = "Daniel";
 
   @override
   Widget build(BuildContext context) {
@@ -74,9 +78,24 @@ class _HomeView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "مرحبا $userName 👋",
-                              style: textTheme.titleLarge,
+                            // اسم المستخدم من BLoC الملف الشخصي (مع shimmer أثناء التحميل)
+                            BlocBuilder<
+                              GetUserProfileBloc,
+                              GetUserProfileState
+                            >(
+                              builder: (context, state) {
+                                if (state is GetUserProfileInitial ||
+                                    state is GetUserProfileLoading) {
+                                  return const _WelcomeNameShimmer();
+                                }
+                                final name = state is GetUserProfileSuccess
+                                    ? state.userProfile.firstName.trim()
+                                    : '';
+                                return Text(
+                                  name.isEmpty ? 'مرحبا 👋' : 'مرحبا $name 👋',
+                                  style: textTheme.titleLarge,
+                                );
+                              },
                             ),
                             SizedBox(height: 5.h),
                             Text(
@@ -86,14 +105,15 @@ class _HomeView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      //profile and notifications icons
+                      //profile and log out icons
                       FadeInLeft(
                         delay: Duration(milliseconds: 500),
                         child: Row(
                           children: [
-                            SizedBox(width: 5.w),
                             InkWell(
-                              onTap: () {},
+                              onTap: () {
+                                context.pushNamed('userProfilePage');
+                              },
                               child: Container(
                                 padding: EdgeInsets.all(3.r),
                                 decoration: BoxDecoration(
@@ -101,7 +121,7 @@ class _HomeView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(15.r),
                                 ),
                                 child: Icon(
-                                  Icons.logout_rounded,
+                                  Icons.person,
                                   size: 30.w,
                                   color: const Color.fromARGB(
                                     255,
@@ -390,6 +410,28 @@ class _HomeView extends StatelessWidget {
               style: Theme.of(context).textTheme.titleSmall,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// هيكل shimmer للاسم أثناء تحميل الملف الشخصي،
+/// بمقاس مطابق لسطر الترحيب (titleLarge) لتفادي القفزة عند ظهور الاسم.
+class _WelcomeNameShimmer extends StatelessWidget {
+  const _WelcomeNameShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.skeletonBase,
+      highlightColor: AppColors.skeletonHighlight,
+      child: Container(
+        width: 150.w,
+        height: 24.h,
+        decoration: BoxDecoration(
+          color: AppColors.skeletonBase,
+          borderRadius: BorderRadius.circular(6.r),
         ),
       ),
     );

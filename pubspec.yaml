@@ -50,6 +50,7 @@ dependencies:
   cached_network_image: ^4.0.3
   material_ui: ^1.2.0
   shimmer: ^4.0.0
+  connectivity_plus: ^7.3.2
 
 dev_dependencies:
   flutter_test:

@@ -1,17 +1,30 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/colors.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../domain/entities/contact_info_entity.dart';
+import '../bloc/get_contact_info/get_contact_info_bloc.dart';
 
-class ContactusPage extends StatefulWidget {
+class ContactusPage extends StatelessWidget {
   const ContactusPage({super.key});
 
   @override
-  State<ContactusPage> createState() => _ContactusPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          sl<GetContactInfoBloc>()..add(const GetContactInfoRequested()),
+      child: const _ContactusView(),
+    );
+  }
 }
 
-class _ContactusPageState extends State<ContactusPage> {
+class _ContactusView extends StatelessWidget {
+  const _ContactusView();
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -67,23 +80,47 @@ class _ContactusPageState extends State<ContactusPage> {
                 ),
               ),
 
-              //contactUs numbers section
+              //contactUs info section
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10.w),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      headerTitle(textTheme, 'تواصل مباشرة'),
-                      SizedBox(height: 10.h),
-                      NumbersTile(textTheme: textTheme),
-                      SizedBox(height: 10.h),
-                      headerTitle(textTheme, 'موقعنا'),
-                      SizedBox(height: 10.h),
-                      LocationTile(textTheme: textTheme),
-                      SizedBox(height: 10.h),
-                    ],
+                  child: BlocBuilder<GetContactInfoBloc, GetContactInfoState>(
+                    builder: (context, state) {
+                      if (state is GetContactInfoFailure) {
+                        return _ContactFailure(message: state.message);
+                      }
+
+                      final contactInfo = state is GetContactInfoSuccess
+                          ? state.contactInfo
+                          : null;
+
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          headerTitle(textTheme, 'تواصل مباشرة'),
+                          SizedBox(height: 10.h),
+                          if (contactInfo == null)
+                            _NumbersShimmer()
+                          else
+                            NumbersTile(
+                              textTheme: textTheme,
+                              contactInfo: contactInfo,
+                            ),
+                          SizedBox(height: 10.h),
+                          headerTitle(textTheme, 'موقعنا'),
+                          SizedBox(height: 10.h),
+                          if (contactInfo == null)
+                            _LocationShimmer()
+                          else
+                            LocationTile(
+                              textTheme: textTheme,
+                              contactInfo: contactInfo,
+                            ),
+                          SizedBox(height: 10.h),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -114,16 +151,17 @@ class _ContactusPageState extends State<ContactusPage> {
 }
 
 class LocationTile extends StatelessWidget {
-  const LocationTile({super.key, required this.textTheme});
+  const LocationTile({super.key, required this.textTheme, this.contactInfo});
 
   final TextTheme textTheme;
+  final ContactInfoEntity? contactInfo;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 10.w),
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.3),
+        color: AppColors.surface.withValues(alpha: 0.3),
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(12.r),
       ),
@@ -157,20 +195,34 @@ class LocationTile extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 10.w),
-              //numbers section
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'شركة تاركوم',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
+              //address section
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'شركة تاركوم',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  Text('طرطوس شارع الثورة', style: textTheme.bodySmall),
-                  Text('جانب فرنسا بنك', style: textTheme.bodySmall),
-                ],
+                    if (contactInfo?.address.isNotEmpty == true)
+                      Text(
+                        contactInfo!.address,
+                        style: textTheme.bodySmall,
+                        textDirection: TextDirection.rtl,
+                      ),
+                    if (contactInfo?.email.isNotEmpty == true)
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          contactInfo!.email,
+                          style: textTheme.bodySmall,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -181,16 +233,22 @@ class LocationTile extends StatelessWidget {
 }
 
 class NumbersTile extends StatelessWidget {
-  const NumbersTile({super.key, required this.textTheme});
+  const NumbersTile({super.key, required this.textTheme, this.contactInfo});
 
   final TextTheme textTheme;
+  final ContactInfoEntity? contactInfo;
 
   @override
   Widget build(BuildContext context) {
+    final phones = <String>[
+      if (contactInfo?.phone1.isNotEmpty == true) contactInfo!.phone1,
+      if (contactInfo?.phone2.isNotEmpty == true) contactInfo!.phone2,
+    ];
+
     return Container(
       padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 10.w),
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.3),
+        color: AppColors.surface.withValues(alpha: 0.3),
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(12.r),
       ),
@@ -228,8 +286,11 @@ class NumbersTile extends StatelessWidget {
                   ),
                   Text('أرقام الشركة', style: textTheme.bodySmall),
                   SizedBox(height: 6.h),
-                  Text('0955321184', style: textTheme.bodySmall),
-                  Text('0955321184', style: textTheme.bodySmall),
+                  for (final phone in phones)
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(phone, style: textTheme.bodySmall),
+                    ),
                 ],
               ),
             ],
@@ -249,6 +310,82 @@ class NumbersTile extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// هيكل shimmer لبليكة الأرقام أثناء التحميل.
+class _NumbersShimmer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.skeletonBase,
+      highlightColor: AppColors.skeletonHighlight,
+      child: Container(
+        height: 92.h,
+        decoration: BoxDecoration(
+          color: AppColors.skeletonBase,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+      ),
+    );
+  }
+}
+
+/// هيكل shimmer لبليكة الموقع أثناء التحميل.
+class _LocationShimmer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.skeletonBase,
+      highlightColor: AppColors.skeletonHighlight,
+      child: Container(
+        height: 190.h,
+        decoration: BoxDecoration(
+          color: AppColors.skeletonBase,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+      ),
+    );
+  }
+}
+
+/// حالة الفشل: رسالة + إعادة محاولة عبر إرسال الحدث للـ Bloc.
+class _ContactFailure extends StatelessWidget {
+  const _ContactFailure({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 30.h),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.cloud_off_rounded,
+            size: 34.w,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            message.isEmpty ? 'تعذّر تحميل معلومات التواصل' : message,
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 8.h),
+          TextButton.icon(
+            onPressed: () {
+              context.read<GetContactInfoBloc>().add(
+                const GetContactInfoRefreshRequested(),
+              );
+            },
+            icon: Icon(Icons.refresh_rounded, size: 18.w),
+            label: const Text('إعادة المحاولة'),
           ),
         ],
       ),

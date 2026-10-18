@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,9 @@ import '../bloc/bloc/get_materials_bloc.dart';
 import '../widgets/product_cell.dart';
 import '../widgets/product_shimmer_cell.dart';
 import 'product_details_page.dart';
+
+/// اسم موحّد لسجلات الترقيم، لسهولة تصفيتها عبر `flutter logs`.
+const String _paginationLog = 'Pagination';
 
 /// بيانات صفحة المنتجات التي تمرَّر عبر الـ route extra من صفحة الشركات.
 /// [categoryId] و[companyId] يُستخدمان لفلترة المواد من الـ API.
@@ -96,19 +100,34 @@ class _ProductsViewState extends State<_ProductsView> {
   void _onScroll() {
     if (!_scrollController.hasClients) return;
 
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
+    final position = _scrollController.position;
+    final maxScroll = position.maxScrollExtent;
+    final currentScroll = position.pixels;
+    final threshold = 240.h;
 
-    if (maxScroll - currentScroll <= 240.h) {
-      context.read<GetMaterialsBloc>().add(
-        const GetMaterialsLoadMoreRequested(),
+    if (maxScroll - currentScroll <= threshold) {
+      final bloc = context.read<GetMaterialsBloc>();
+      final state = bloc.state;
+      final items = state is GetMaterialsSuccess ? state.materials.length : 0;
+      developer.log(
+        'VIEW     near bottom: pixels=${currentScroll.toStringAsFixed(0)}/'
+        '${maxScroll.toStringAsFixed(0)} '
+        'remaining=${(maxScroll - currentScroll).toStringAsFixed(0)} '
+        'threshold=${threshold.toStringAsFixed(0)} items=$items '
+        'state=${state.runtimeType} dispatching LoadMore',
+        name: _paginationLog,
       );
+      bloc.add(const GetMaterialsLoadMoreRequested());
     }
   }
 
   // البحث: يعيد الطلب بنفس الفلاتر مع مصطلح البحث.
   void _onSearchChanged(String term) {
     final bloc = context.read<GetMaterialsBloc>();
+    developer.log(
+      'VIEW     search changed: "$term" (resets to page 1 after debounce)',
+      name: _paginationLog,
+    );
     // إلغاء الطلبات القديمة عبر debounce بسيطة.
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
@@ -128,6 +147,10 @@ class _ProductsViewState extends State<_ProductsView> {
   // السحب للتحديث: ننتظر انتهاء حالة التحميل لإخفاء المؤشر.
   Future<void> _onRefresh() async {
     final bloc = context.read<GetMaterialsBloc>();
+    developer.log(
+      'VIEW     pull-to-refresh (resets to page 1)',
+      name: _paginationLog,
+    );
     final completer = Completer<void>();
 
     final subscription = bloc.stream.listen((state) {
@@ -221,25 +244,6 @@ class _ProductsViewState extends State<_ProductsView> {
                       ),
                     ),
                     centerTitle: true,
-                    actions: [
-                      Padding(
-                        padding: EdgeInsetsDirectional.only(end: 16.w),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              //maybe we will add a cart page.
-                            },
-                            icon: const Icon(Icons.shopping_bag_outlined),
-                            color: AppColors.primary,
-                            iconSize: 21.r,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
 
                   //blue section header
