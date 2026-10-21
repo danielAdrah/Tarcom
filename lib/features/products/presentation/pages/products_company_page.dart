@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/routes/nav_paths.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/company_entity.dart';
 import '../bloc/bloc/get_companies_bloc.dart';
@@ -14,7 +15,12 @@ import '../widgets/company_shimmer_cell.dart';
 import 'products_page.dart';
 
 class ProductsCompanyPage extends StatelessWidget {
-  const ProductsCompanyPage({super.key, this.category, this.categoryTitle});
+  const ProductsCompanyPage({
+    super.key,
+    this.category,
+    this.categoryTitle,
+    this.categoryInternalName,
+  });
 
   /// الفئة المختارة، وتُمرَّر كمعامل `category` في طلب الشركات.
   final CategoryEntity? category;
@@ -22,25 +28,54 @@ class ProductsCompanyPage extends StatelessWidget {
   /// بديل عند تمرير اسم الفئة فقط (من شريط الفئات في الصفحة الرئيسية).
   final String? categoryTitle;
 
+  /// الاسم الداخلي للفئة، يُستخدم لفلترة الشركات عبر `category_internal_name`.
+  final String? categoryInternalName;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          sl<GetCompaniesBloc>()
-            ..add(GetCompaniesRequested(categoryId: category?.id)),
+      create: (_)
+          => sl<GetCompaniesBloc>()
+            ..add(
+              GetCompaniesRequested(
+                categoryId: category?.id,
+                categoryInternalName: categoryInternalName,
+              ),
+            ),
       child: _ProductsCompanyView(
         category: category,
         categoryTitle: categoryTitle,
+        categoryInternalName: categoryInternalName,
       ),
     );
   }
 }
 
+/// معطيات التنقل إلى صفحة الشركات عندما تُمرَّر الفئة بالاسم الداخلي فقط
+/// (مثل اختصارات الوصول السريع في الصفحة الرئيسية).
+class ProductsCompanyArgs {
+  const ProductsCompanyArgs({
+    this.categoryTitle,
+    this.categoryInternalName,
+  });
+
+  /// اسم العرض للفئة.
+  final String? categoryTitle;
+
+  /// الاسم الداخلي للفئة المستخدم لجلب الشركات.
+  final String? categoryInternalName;
+}
+
 class _ProductsCompanyView extends StatelessWidget {
-  const _ProductsCompanyView({this.category, this.categoryTitle});
+  const _ProductsCompanyView({
+    this.category,
+    this.categoryTitle,
+    this.categoryInternalName,
+  });
 
   final CategoryEntity? category;
   final String? categoryTitle;
+  final String? categoryInternalName;
 
   String get _categoryName {
     if (category != null) {
@@ -58,7 +93,10 @@ class _ProductsCompanyView extends StatelessWidget {
         child: RefreshIndicator(
           onRefresh: () async {
             context.read<GetCompaniesBloc>().add(
-              GetCompaniesRefreshRequested(categoryId: category?.id),
+              GetCompaniesRefreshRequested(
+                categoryId: category?.id,
+                categoryInternalName: categoryInternalName,
+              ),
             );
           },
           child: FadeInUp(
@@ -229,8 +267,8 @@ class _ProductsCompanyView extends StatelessWidget {
           return CompanyCell(
             company: company,
             onTap: () {
-              context.pushNamed(
-                'productsPage',
+              context.push(
+                NavPaths.withinBranch(context, NavPaths.products),
                 extra: ProductsPageArgs(
                   categoryId: category?.id,
                   categoryName: _categoryName,
@@ -275,7 +313,10 @@ class _ProductsCompanyView extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () {
                   context.read<GetCompaniesBloc>().add(
-                    GetCompaniesRequested(categoryId: category?.id),
+                    GetCompaniesRequested(
+                      categoryId: category?.id,
+                      categoryInternalName: categoryInternalName,
+                    ),
                   );
                 },
                 icon: const Icon(Icons.refresh_rounded),

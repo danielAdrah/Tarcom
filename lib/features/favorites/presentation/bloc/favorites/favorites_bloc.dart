@@ -11,8 +11,10 @@ part 'favorites_state.dart';
 
 /// يدير حالة قائمة المفضلة: الجلب، التحديث، وتبديل حالة عنصر.
 ///
-/// عند التبديل نعتمد على راية `is_favourite` في استجابة الـ API لتحديث
-/// الواجهة فوراً: إن أصبحت `false` نُزيل العنصر من القائمة محلياً.
+/// يُوفَّر هذا الـ Bloc على جذر التطبيق (انظر `main.dart`) كنسخة واحدة
+/// مشتركة، فتقرأ كل الصفحات (الرئيسية/المنتجات/التفاصيل/البحث/المفضلة)
+/// وتكتب نفس الحالة. عند تبديل عنصر في أي صفحة تُبعث حالة جديدة
+/// فيعيد `BlocBuilder` في صفحة المفضلة البناء فوراً دون إعادة تشغيل.
 class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
   final GetFavoritesUseCase getFavoritesUseCase;
   final ToggleFavoriteUseCase toggleFavoriteUseCase;
@@ -26,6 +28,17 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
   /// المُفضَّلة. تُعبّأ من قائمة المفضلة عند الجلب، وتُحدَّث فوراً حسب
   /// `is_favourite` العائد من عملية التبديل (حتى للمواد غير المدرجة في القائمة).
   final Set<int> _favoriteIds = <int>{};
+
+  /// معرّفات تمت إضافتها بشكل تفاؤلي (optimistic) بعد نجاح `toggle` ولم
+  /// تؤكّدها استجابة `get favourites` بعد. تُستخدم لمنع الجلب الخلفي من
+  /// محو القلب في اللحظة التي يضغط فيها المستخدم، خصوصاً إذا كان الـ fetch
+  /// سابقاً لتزامن الخادم.
+  final Set<int> _pendingAdds = <int>{};
+
+  /// عدّاد يتزايد مع كل انبعاث نجاح، لضمان اختلاف حالة `FavoritesSuccess`
+  /// بين دفعتين حتى لو تطابق المحتوى (يمنع أي إلغاء إعادة بناء عبر
+  /// Equatable equality عند حدوث تغيير حقيقي في الواجهة).
+  int _revision = 0;
 
   FavoritesBloc({
     required this.getFavoritesUseCase,
@@ -52,7 +65,7 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
     FavoritesRefreshRequested event,
     Emitter<FavoritesState> emit,
   ) async {
-    // التحديث بالسحب: نُبقي القائمة الظاهرة بدلاً من شاشة تحميل كاملة.
+    // التحديث بالسحب أو خلف التبديل: نُبقي القائمة الظاهرة بدلاً من شاشة كاملة.
     await _fetch(
       emit,
       name: event.name,
@@ -82,10 +95,20 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
 
       _favorites = response.results;
       _count = response.count;
-      // إعادة بناء معرّفات المفضلة من القائمة المجلوبة حديثاً.
+
+      // إعادة بناء معرّفات المفضلة من القائمة المجلوبة حديثاً، مع
+      // **عدم** محو المعرّفات المضافة تفاؤلياً أو قيد التبديل: هذه نافذة
+      // يتعامل فيها الخادم مع آخر تبديل؛ محوها يعيد القلب فارغاً في
+      // صفحة المنتجات ويوحي للمستخدم بأن التحديث لم يصل لصفحة المفضلة.
+      final fetchedIds = _favorites.map((f) => f.materialId).toSet();
       _favoriteIds
         ..clear()
-        ..addAll(_favorites.map((f) => f.materialId));
+        ..addAll(fetchedIds)
+        ..addAll(_pendingAdds)
+        ..addAll(_togglingIds);
+      // ما ظهر في الخادم لم يعد معلّقاً.
+      _pendingAdds.removeWhere(fetchedIds.contains);
+
       emit(_success());
     } on ApiException catch (e) {
       emit(FavoritesFailure(message: e.message, exception: e));
@@ -109,11 +132,13 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
 
       // تحديث الواجهة بناءً على `is_favourite` العائد من الخادم.
       if (result.isFavourite) {
-        // تمت الإضافة: سجّل المعرّف كمُفضَّل (قد لا يكون في القائمة المحمّلة).
+        // تمت الإضافة: سجّل المعرّف كمُفضَّل بشكل تفاؤلي (قد لا يكون في القائمة المحمّلة).
         _favoriteIds.add(event.materialId);
+        _pendingAdds.add(event.materialId);
       } else {
         // تمت الإزالة: حدّث المجموعة وأزل العنصر من القائمة إن وُجد.
         _favoriteIds.remove(event.materialId);
+        _pendingAdds.remove(event.materialId);
         _favorites = _favorites
             .where((f) => f.materialId != event.materialId)
             .toList();
@@ -122,6 +147,15 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
 
       _togglingIds.remove(event.materialId);
       emit(_success(message: result.message));
+
+      // عند الإضافة فقط: الكائن الكامل (`FavoriteMaterialEntity`) غير متاح
+      // محلياً، فنطلب جلباً خلفياً عبر حدث `FavoritesRefreshRequested` حتى
+      // تظهر المادة الجديدة في صفحة المفضلة فوراً. استخدام `add` بدل
+      // استدعاء `_fetch` مباشرة يُبقي المعالجة داخل طابور الأحداث ولا
+      // يُعرّض الانبعاث الحالي للتداخل مع طلبات متتابعة.
+      if (result.isFavourite) {
+        add(const FavoritesRefreshRequested());
+      }
     } on ApiException catch (e) {
       // نُبقي القائمة كما هي ونبلّغ المستخدم بخطأ واضح.
       _togglingIds.remove(event.materialId);
@@ -133,7 +167,9 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
   }
 
   FavoritesSuccess _success({String? message, String? errorMessage}) {
+    _revision++;
     return FavoritesSuccess(
+      revision: _revision,
       favorites: _favorites,
       count: _count,
       favoriteIds: Set<int>.unmodifiable(_favoriteIds),

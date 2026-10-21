@@ -1,6 +1,7 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/common/app_background.dart';
 import '../../../../core/common/custom_indecator.dart';
 import '../../../../core/constants/colors.dart';
+// import '../../../profile/presentation/widgets/profile_edit_field.dart';
 import '../bloc/sign_up.dart/bloc/sign_up_bloc.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -23,6 +25,12 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController numberController = TextEditingController();
+
+  /// رمز الدولة السوري الثابت كبادئة غير قابلة للتحرير أمام حقل الهاتف.
+  static const String _phonePrefix = '+963';
+
+  /// التحقق من الجزء المحلي فقط: 9 أرقام بعد البادئة `_phonePrefix`.
+  static final RegExp _localPhoneRegex = RegExp(r'^\d{9}$');
 
   @override
   void dispose() {
@@ -43,6 +51,15 @@ class _SignUpPageState extends State<SignUpPage> {
     passwordController.clear();
   }
 
+  String? _validatePhone(String? value) {
+    final String trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) return 'رقم الهاتف مطلوب';
+    if (!_localPhoneRegex.hasMatch(trimmed)) {
+      return 'يجب أن يكون الرقم 9 أرقام (مثال: 991234567)';
+    }
+    return null;
+  }
+
   void _submitSignUp() {
     context.read<SignUpBloc>().add(
       SignUpSubmitted(
@@ -50,7 +67,8 @@ class _SignUpPageState extends State<SignUpPage> {
         password: passwordController.text,
         firstName: firstNameController.text.trim(),
         lastName: lastNameController.text.trim(),
-        phone: numberController.text.trim(),
+        // نجمع البادئة الثابتة مع الإدخال المحلي لإرسال الرقم الدولي الكامل.
+        phone: '$_phonePrefix${numberController.text.trim()}',
         userType: 'customer',
       ),
     );
@@ -244,15 +262,39 @@ class _SignUpPageState extends State<SignUpPage> {
                           borderRadius: BorderRadius.circular(12.r),
                           child: TextField(
                             controller: numberController,
-                            keyboardType: TextInputType.number,
+                            // maxLength: 9,
+                            keyboardType: TextInputType.phone,
                             decoration: InputDecoration(
-                              hintText: 'ادخل رقم الهاتف',
+                              hintText: 'أدخل رقم الهاتف',
                               prefixIcon: Icon(Icons.phone),
                               // fillColor: AppColors.surface.withOpacity(0.8),
                             ),
                           ),
                         ),
                       ),
+
+                      // FadeInUp(
+                      //   delay: Duration(milliseconds: 1400),
+                      //   child: Material(
+                      //     borderRadius: BorderRadius.circular(12.r),
+                      //     // نغلّف الحقل بـ LTR مثل ProfileEditField في صفحة الملف الشخصي
+                      //     // حتى يظهر البادئة الثابتة «+963» على اليسار بشكل صحيح.
+                      //     child: ProfileEditField(
+                      //       icon: Icons.phone_enabled,
+                      //       label: 'رقم الهاتف',
+                      //       controller: numberController,
+                      //       prefixText: '$_phonePrefix ',
+                      //       keyboardType: TextInputType.number,
+                      //       maxLength: 9,
+                      //       hintText: '',
+                      //       inputFormatters: [
+                      //         FilteringTextInputFormatter.digitsOnly,
+                      //         LengthLimitingTextInputFormatter(9),
+                      //       ],
+                      //       validator: _validatePhone,
+                      //     ),
+                      //   ),
+                      // ),
                       SizedBox(height: 20.h),
                       FadeInUp(
                         delay: Duration(milliseconds: 1300),
@@ -286,13 +328,11 @@ class _SignUpPageState extends State<SignUpPage> {
                               delay: Duration(milliseconds: 1500),
                               child: ElevatedButton(
                                 onPressed: () {
-                                  print("before the submit");
                                   if (firstNameController.text.trim().isEmpty ||
                                       lastNameController.text.trim().isEmpty ||
                                       emailController.text.trim().isEmpty ||
                                       passwordController.text.isEmpty ||
                                       numberController.text.trim().isEmpty) {
-                                    print("Some fields are empty");
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
@@ -304,29 +344,23 @@ class _SignUpPageState extends State<SignUpPage> {
                                       ),
                                     );
                                     return;
+                                  } else if (!_localPhoneRegex.hasMatch(
+                                    numberController.text.trim(),
+                                  )) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'يجب أن يكون رقم الهاتف 9 أرقام (مثال: 991234567).',
+                                        ),
+                                        behavior: SnackBarBehavior.floating,
+                                        duration: const Duration(seconds: 4),
+                                        backgroundColor: AppColors.error,
+                                      ),
+                                    );
+                                    return;
                                   } else {
                                     _submitSignUp();
                                   }
-
-                                  // context.read<SignUpBloc>().add(
-                                  //   SignUpSubmitted(
-                                  //     email: emailController.text.trim(),
-                                  //     password: passwordController.text,
-                                  //     firstName: firstNameController.text
-                                  //         .trim(),
-                                  //     lastName: lastNameController.text.trim(),
-                                  //     phone: numberController.text.trim(),
-                                  //     userType: 'customer',
-                                  //     // email: 'www.dada@gmail.com',
-                                  //     // password: '112233Ali!',
-                                  //     // firstName: 'ali',
-                                  //     // lastName: 'ali',
-                                  //     // phone: '1234567890',
-                                  //     // userType: 'customer',
-                                  //   ),
-                                  // );
-                                  print("after the submit");
-                                  // context.pushNamed('verfiyCodePage');
                                 },
                                 child: Text('إنشاء حساب'),
                               ),

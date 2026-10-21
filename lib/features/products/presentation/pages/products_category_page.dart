@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/routes/nav_paths.dart';
 import '../../domain/entities/category_entity.dart';
 
 import '../bloc/bloc/get_categories_bloc.dart';
@@ -119,7 +120,10 @@ class _ProductsCategoryView extends StatelessWidget {
           return CategoryCell(
             category: category,
             onTap: () {
-              context.pushNamed('productsCompanyPage', extra: category);
+              context.push(
+                NavPaths.withinBranch(context, NavPaths.companies),
+                extra: category,
+              );
             },
           );
         },

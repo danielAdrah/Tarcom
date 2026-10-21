@@ -39,7 +39,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
 
         if (state is GetBannersSuccess) {
           if (state.banners.isEmpty) {
-            return const SizedBox.shrink();
+            return _BannerEmpty(height: _height(context));
           }
           return _buildCarousel(context, state.banners);
         }
@@ -222,6 +222,33 @@ class _BannerCarouselShimmer extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// حالة الفراغ: لا توجد لافتات بعد.
+class _BannerEmpty extends StatelessWidget {
+  const _BannerEmpty({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_outlined, size: 34.w, color: AppColors.blue100),
+            SizedBox(height: 8.h),
+            Text(
+              'لا توجد لافتات بعد',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
+import '../../../../core/routes/nav_paths.dart';
 import '../../../products/domain/entities/material_entity.dart';
 import '../../../products/presentation/pages/product_details_page.dart';
 import '../cubit/search_cubit.dart';
@@ -154,14 +155,15 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
     _focusNode.unfocus();
     context.read<SearchCubit>().dismiss();
     _removeOverlay();
-    context.pushNamed(
-      'productDetailsPage',
+    context.push(
+      NavPaths.withinBranch(context, NavPaths.details),
       extra: ProductDetailsArgs(
         name: material.displayTitle,
         price: material.consumerPriceLabel,
         image: material.image ?? '',
         desc: material.displayDescription,
         category: material.categoryName,
+        materialId: material.id,
         specifications: material.specifications,
       ),
     );
@@ -172,7 +174,7 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
     _focusNode.unfocus();
     context.read<SearchCubit>().dismiss();
     _removeOverlay();
-    context.pushNamed('searchResultsPage', extra: query);
+    context.push(NavPaths.withinBranch(context, NavPaths.search), extra: query);
   }
 
   @override

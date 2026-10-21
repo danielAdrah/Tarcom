@@ -5,24 +5,21 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/colors.dart';
-import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/route_imports.dart';
 import '../../domain/entities/favorite_material_entity.dart';
 import '../bloc/favorites/favorites_bloc.dart';
 
 /// صفحة المنتجات المفضلة.
 ///
-/// توفّر [FavoritesBloc] محلياً وتطلق طلب الجلب عند البناء،
-/// لتعمل سواء كانت موصولة عبر مسار أو داخل شريط التنقّل السفلي.
+/// تعتمد على [FavoritesBloc] المشترك المُوفَّر على مستوى الـ shell (انظر
+/// `route_main.dart`)، لذلك تظلّ قائمة المفضلة متزامنة مع أي تبديل يحدث
+/// في الصفحات الأخرى (المنتجات/التفاصيل/البحث) وتظهر العناصر الجديدة فوراً.
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<FavoritesBloc>()..add(const FavoritesRequested()),
-      child: const _FavoritesView(),
-    );
+    return const _FavoritesView();
   }
 }
 
@@ -273,15 +270,20 @@ class _FavoriteProductCardState extends State<_FavoriteProductCard> {
     return InkWell(
       onTap: () {
         // تمرير بيانات المنتج المضغوط عليه إلى صفحة التفاصيل.
-        // استجابة المفضلة لا تتضمّن الوصف/المواصفات، فتُترك فارغة.
-        context.pushNamed(
-          'productDetailsPage',
+        // المواصفات تُقرأ من `material_detail` عبر الـ getter `specs`،
+        // بينما الوصف النصي غير متوفر في استجابة المفضلة فيُترك فارغاً.
+        context.push(
+          NavPaths.withinBranch(context, NavPaths.details),
           extra: ProductDetailsArgs(
             name: detail.name,
             price: detail.consumerPriceLabel,
             image: detail.image ?? '',
             desc: '',
             category: detail.categoryName,
+            materialId: detail.id,
+            specifications: detail.specs
+                .map((s) => MapEntry(s.key, s.value))
+                .toList(),
           ),
         );
       },

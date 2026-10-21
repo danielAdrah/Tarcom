@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/common/custom_indecator.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/routes/nav_paths.dart';
 import '../../../favorites/presentation/bloc/favorites/favorites_bloc.dart';
 import '../../domain/entities/material_entity.dart';
 import '../bloc/bloc/get_materials_bloc.dart';
@@ -43,24 +44,17 @@ class ProductsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) => sl<GetMaterialsBloc>()
-            ..add(
-              GetMaterialsRequested(
-                category: args.categoryId,
-                company: args.companyId,
-                companyName: args.companyName,
-              ),
-            ),
+    // [FavoritesBloc] مشترك على مستوى الـ shell (انظر `route_main.dart`)،
+    // فلا نُنشئ نسخة محلية هنا؛ القلوب والتبديل يقرؤون/يكتبون لنفس النسخة.
+    return BlocProvider(
+      create: (_) => sl<GetMaterialsBloc>()
+        ..add(
+          GetMaterialsRequested(
+            category: args.categoryId,
+            company: args.companyId,
+            companyName: args.companyName,
+          ),
         ),
-        // مفضّلات المستخدم: تُجلب عند فتح الصفحة لتعبئة معرّفات المفضلة،
-        // فتظهر القلوب ممتلئة للمنتجات المحفوظة مسبقاً.
-        BlocProvider(
-          create: (_) => sl<FavoritesBloc>()..add(const FavoritesRequested()),
-        ),
-      ],
       child: _ProductsView(args: args),
     );
   }
@@ -702,8 +696,8 @@ class _ProductCellWithFavorite extends StatelessWidget {
 
     return ProductCell(
       onTap: () {
-        context.pushNamed(
-          'productDetailsPage',
+        context.push(
+          NavPaths.withinBranch(context, NavPaths.details),
           extra: ProductDetailsArgs(
             name: material.displayTitle,
             price: material.consumerPriceLabel,
@@ -712,6 +706,7 @@ class _ProductCellWithFavorite extends StatelessWidget {
             category: material.categoryName.isNotEmpty
                 ? material.categoryName
                 : categoryNameFallback,
+            materialId: material.id,
             specifications: material.specifications,
           ),
         );

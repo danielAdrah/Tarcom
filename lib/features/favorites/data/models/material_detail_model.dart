@@ -12,6 +12,16 @@ class MaterialDetailModel extends MaterialDetailEntity {
     required super.categoryName,
     required super.uom,
     required super.uomName,
+    super.specKey1,
+    super.specKey2,
+    super.specKey3,
+    super.specKey4,
+    super.specKey5,
+    super.specVal1,
+    super.specVal2,
+    super.specVal3,
+    super.specVal4,
+    super.specVal5,
   });
 
   factory MaterialDetailModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +37,16 @@ class MaterialDetailModel extends MaterialDetailEntity {
       categoryName: json['category_name'] as String? ?? '',
       uom: (json['uom'] as num?)?.toInt(),
       uomName: json['uom_name'] as String? ?? '',
+      specKey1: json['spec_key1'] as String?,
+      specKey2: json['spec_key2'] as String?,
+      specKey3: json['spec_key3'] as String?,
+      specKey4: json['spec_key4'] as String?,
+      specKey5: json['spec_key5'] as String?,
+      specVal1: json['spec_val1'] as String?,
+      specVal2: json['spec_val2'] as String?,
+      specVal3: json['spec_val3'] as String?,
+      specVal4: json['spec_val4'] as String?,
+      specVal5: json['spec_val5'] as String?,
     );
   }
 

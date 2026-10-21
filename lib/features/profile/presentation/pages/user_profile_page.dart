@@ -58,7 +58,11 @@ class _UserProfileViewState extends State<_UserProfileView> {
 
   bool _isEditing = false;
 
-  static final RegExp _phoneRegex = RegExp(r'^\+[1-9]\d{6,14}$');
+  /// رمز الدولة السوري الثابت كبادئة غير قابلة للتحرير أمام حقل الهاتف.
+  static const String _phonePrefix = '+963';
+
+  /// التحقق من الجزء المحلي فقط: 9 أرقام بعد البادئة `_phonePrefix`.
+  static final RegExp _localPhoneRegex = RegExp(r'^\d{9}$');
 
   @override
   void dispose() {
@@ -72,8 +76,18 @@ class _UserProfileViewState extends State<_UserProfileView> {
   void _startEdit(UserProfileEntity profile) {
     _firstNameCtrl.text = profile.firstName;
     _lastNameCtrl.text = profile.lastName;
-    _phoneCtrl.text = profile.phone;
+    // نخزّن الجزء المحلي فقط في الحقل؛ البادئة `_phonePrefix` ثابتة في الواجهة.
+    _phoneCtrl.text = _stripPhonePrefix(profile.phone);
     setState(() => _isEditing = true);
+  }
+
+  /// إزالة البادئة الدولية من الرقم المحفوظ لاستخراج 9 الأرقام المحلية.
+  String _stripPhonePrefix(String phone) {
+    String local = phone.trim();
+    if (local.startsWith(_phonePrefix)) {
+      local = local.substring(_phonePrefix.length);
+    }
+    return local.replaceAll(RegExp(r'[^0-9]'), '');
   }
 
   void _cancelEdit() => setState(() => _isEditing = false);
@@ -88,7 +102,8 @@ class _UserProfileViewState extends State<_UserProfileView> {
         params: UpdateProfileParams(
           firstName: _firstNameCtrl.text.trim(),
           lastName: _lastNameCtrl.text.trim(),
-          phone: _phoneCtrl.text.trim(),
+          // نجمع البادئة الثابتة مع الإدخال المحلي لإرسال الرقم الدولي الكامل.
+          phone: '$_phonePrefix${_phoneCtrl.text.trim()}',
         ),
       ),
     );
@@ -104,8 +119,8 @@ class _UserProfileViewState extends State<_UserProfileView> {
   String? _validatePhone(String? value) {
     final String trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) return 'رقم الهاتف مطلوب';
-    if (!_phoneRegex.hasMatch(trimmed)) {
-      return 'صيغة غير صحيحة (مثال: +963991234567)';
+    if (!_localPhoneRegex.hasMatch(trimmed)) {
+      return 'يجب أن يكون الرقم 9 أرقام (مثال: 991234567)';
     }
     return null;
   }
@@ -313,13 +328,14 @@ class _UserProfileViewState extends State<_UserProfileView> {
                                         icon: Icons.phone_enabled,
                                         label: 'رقم الهاتف',
                                         controller: _phoneCtrl,
+                                        // prefixText: '$_phonePrefix ',
                                         keyboardType: TextInputType.phone,
-                                        maxLength: 16,
-                                        hintText: '+963991234567',
+                                        maxLength: 9,
+                                        hintText: '991234567',
                                         inputFormatters: [
-                                          FilteringTextInputFormatter.allow(
-                                            RegExp(r'[0-9+]'),
-                                          ),
+                                          FilteringTextInputFormatter
+                                              .digitsOnly,
+                                          LengthLimitingTextInputFormatter(9),
                                         ],
                                         validator: _validatePhone,
                                       )

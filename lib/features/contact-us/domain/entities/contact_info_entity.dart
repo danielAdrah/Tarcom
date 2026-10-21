@@ -1,13 +1,14 @@
 /// كيان معلومات التواصل الخاصة بالموقع كما ترجعه نقطة `/api/contact/info/`.
 ///
 /// الاستجابة كائن مفرد (Singleton) بالحقول:
-/// `{id, phone1, phone2, email, address, created_at, updated_at}`.
+/// `{id, phone1, phone2, email, address, facebook, created_at, updated_at}`.
 class ContactInfoEntity {
   final int id;
   final String phone1;
   final String phone2;
   final String email;
   final String address;
+  final String facebook;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -17,6 +18,7 @@ class ContactInfoEntity {
     required this.phone2,
     required this.email,
     required this.address,
+    required this.facebook,
     required this.createdAt,
     required this.updatedAt,
   });

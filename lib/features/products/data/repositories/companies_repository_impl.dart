@@ -11,10 +11,12 @@ class CompaniesRepositoryImpl implements CompaniesRepository {
   Future<List<CompanyEntity>> getMaterialCompanies({
     int? categoryId,
     bool? isActive,
+    String? categoryInternalName,
   }) async {
     return await remoteDataSource.getMaterialCompanies(
       categoryId: categoryId,
       isActive: isActive,
+      categoryInternalName: categoryInternalName,
     );
   }
 }

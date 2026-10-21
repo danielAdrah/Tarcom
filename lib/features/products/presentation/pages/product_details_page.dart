@@ -1,11 +1,13 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/routes/route_imports.dart';
+import '../../../favorites/presentation/bloc/favorites/favorites_bloc.dart';
 
 /// بيانات المنتج التي تمرَّر عبر الـ route extra من القوائم إلى صفحة التفاصيل.
 class ProductDetailsArgs {
@@ -15,6 +17,7 @@ class ProductDetailsArgs {
     required this.image,
     required this.desc,
     required this.category,
+    this.materialId,
     this.specifications = const [],
   });
 
@@ -23,10 +26,12 @@ class ProductDetailsArgs {
   final String image;
   final String desc;
   final String category;
+  // معرّف المادة المستخدم لتبديل المفضلة. قد يكون غائباً في المسارات القديمة.
+  final int? materialId;
   final List<MapEntry<String, String>> specifications;
 }
 
-class ProductDetailsPage extends StatefulWidget {
+class ProductDetailsPage extends StatelessWidget {
   const ProductDetailsPage({
     super.key,
     required this.proName,
@@ -34,6 +39,7 @@ class ProductDetailsPage extends StatefulWidget {
     required this.proImage,
     required this.proDesc,
     required this.proCategory,
+    this.materialId,
     this.specifications = const [
       MapEntry('المعالج', 'Core i5 13 H'),
       MapEntry('الرام', '16G DDR5'),
@@ -49,14 +55,50 @@ class ProductDetailsPage extends StatefulWidget {
   final String proImage;
   final String proDesc;
   final String proCategory;
+  final int? materialId;
 
   @override
-  State<ProductDetailsPage> createState() => _ProductDetailsPageState();
+  Widget build(BuildContext context) {
+    // [FavoritesBloc] مشترك على مستوى الـ shell (انظر `route_main.dart`)،
+    // فيظهر القلب ممتلئاً إن كان المنتج محفوظاً، وينعكس أي تبديل هنا
+    // فوراً على صفحة المفضلة دون إعادة بناء الـ Bloc.
+    return _ProductDetailsView(
+      proName: proName,
+      proPrice: proPrice,
+      proImage: proImage,
+      proDesc: proDesc,
+      proCategory: proCategory,
+      materialId: materialId,
+      specifications: specifications,
+    );
+  }
 }
 
-class _ProductDetailsPageState extends State<ProductDetailsPage> {
+class _ProductDetailsView extends StatefulWidget {
+  const _ProductDetailsView({
+    required this.proName,
+    required this.proPrice,
+    required this.proImage,
+    required this.proDesc,
+    required this.proCategory,
+    required this.materialId,
+    required this.specifications,
+  });
+
+  final List<MapEntry<String, String>> specifications;
+  final String proName;
+  final String proPrice;
+  final String proImage;
+  final String proDesc;
+  final String proCategory;
+  final int? materialId;
+
+  @override
+  State<_ProductDetailsView> createState() => _ProductDetailsViewState();
+}
+
+class _ProductDetailsViewState extends State<_ProductDetailsView> {
   static const int _initialSpecificationCount = 4;
-  bool _isFavorite = false;
   bool _showAllSpecifications = false;
 
   @override
@@ -64,151 +106,263 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       body: SafeArea(
-        child: FadeInUp(
-          delay: Duration(milliseconds: 400),
-          child: CustomScrollView(
-            physics: BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                automaticallyImplyLeading: false,
-                pinned: true,
-                toolbarHeight: 64.h,
-                backgroundColor: AppColors.background,
-                elevation: 0,
-                surfaceTintColor: Colors.transparent,
-                leading: Padding(
-                  padding: EdgeInsetsDirectional.only(start: 16.w),
-                  child: DecoratedBox(
+        child: BlocListener<FavoritesBloc, FavoritesState>(
+          // نعرض رسالة لمرة واحدة عند تغيّرها فقط (نجاح/فشل التبديل).
+          listenWhen: (previous, current) =>
+              current is FavoritesSuccess &&
+              previous is FavoritesSuccess &&
+              (current.lastMessage != previous.lastMessage ||
+                  current.lastError != previous.lastError),
+          listener: (context, state) {
+            final success = state as FavoritesSuccess;
+            final message = success.lastError ?? success.lastMessage;
+            if (message == null || message.isEmpty) return;
+
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(message),
+                  backgroundColor: success.lastError != null
+                      ? AppColors.error
+                      : AppColors.primary,
+                  behavior: SnackBarBehavior.floating,
+                  margin: EdgeInsets.all(12.w),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              );
+          },
+          child: FadeInUp(
+            delay: Duration(milliseconds: 400),
+            child: CustomScrollView(
+              physics: BouncingScrollPhysics(),
+              slivers: [
+                SliverAppBar(
+                  automaticallyImplyLeading: false,
+                  pinned: true,
+                  toolbarHeight: 64.h,
+                  backgroundColor: AppColors.background,
+                  elevation: 0,
+                  surfaceTintColor: Colors.transparent,
+                  leading: Padding(
+                    padding: EdgeInsetsDirectional.only(start: 16.w),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: IconButton(
+                        onPressed: () {
+                          context.pop();
+                        },
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        color: AppColors.primary,
+                        iconSize: 19.r,
+                      ),
+                    ),
+                  ),
+                  centerTitle: true,
+                ),
+                //Product image
+                SliverToBoxAdapter(
+                  child: Container(
+                    height: 250.h,
+                    margin: EdgeInsets.symmetric(
+                      vertical: 5.r,
+                      horizontal: 15.r,
+                    ),
+                    padding: EdgeInsets.all(16.r),
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(14.r),
+                      color: AppColors.surface.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: IconButton(
-                      onPressed: () {
-                        context.pop();
-                      },
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      color: AppColors.primary,
-                      iconSize: 19.r,
-                    ),
+                    child: Center(child: _buildProductImage()),
                   ),
                 ),
-                centerTitle: true,
-              ),
-              //Product image
-              SliverToBoxAdapter(
-                child: Container(
-                  height: 250.h,
-                  margin: EdgeInsets.symmetric(vertical: 5.r, horizontal: 15.r),
-                  padding: EdgeInsets.all(16.r),
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(child: _buildProductImage()),
-                ),
-              ),
 
-              //product title ,category and price
-              SliverToBoxAdapter(
-                child: Padding(
+                //product title ,category and price
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 15.h,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        //product title
+                        Text(
+                          widget.proName.isNotEmpty ? widget.proName : 'منتج',
+                          style: textTheme.displaySmall?.copyWith(
+                            color: const Color.fromARGB(255, 82, 90, 105),
+                          ),
+                        ),
+                        //product category
+                        if (widget.proCategory.isNotEmpty)
+                          Text(
+                            widget.proCategory,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        SizedBox(height: 10.h),
+                        //product price
+                        if (widget.proPrice.isNotEmpty)
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16.r),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.35,
+                                ),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.05,
+                                  ),
+                                  blurRadius: 16.r,
+                                  offset: Offset(0, 5.h),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              textDirection: TextDirection.rtl,
+                              children: [
+                                Icon(
+                                  Icons.sell_outlined,
+                                  color: AppColors.secondary,
+                                  size: 22.r,
+                                ),
+                                SizedBox(width: 10.w),
+                                Text(
+                                  '${widget.proPrice}\$',
+                                  textDirection: TextDirection.rtl,
+                                  style: textTheme.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // container with key-value specs for the product
+                SliverPadding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 15.h,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //product title
-                      Text(
-                        widget.proName.isNotEmpty ? widget.proName : 'منتج',
-                        style: textTheme.displaySmall?.copyWith(
-                          color: const Color.fromARGB(255, 82, 90, 105),
-                        ),
-                      ),
-                      //product category
-                      if (widget.proCategory.isNotEmpty)
-                        Text(
-                          widget.proCategory,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      SizedBox(height: 10.h),
-                      //product price
-                      if (widget.proPrice.isNotEmpty)
-                        Text(
-                          '${widget.proPrice}\$',
-                          style: textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.secondary,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // container with key-value specs for the product
-              SliverPadding(
-                padding: EdgeInsets.symmetric(vertical: 5.h, horizontal: 10.w),
-                sliver: SliverToBoxAdapter(
-                  child: _buildSpecifications(context),
-                ),
-              ),
-
-              //product description
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsetsGeometry.symmetric(
-                    horizontal: 10.w,
                     vertical: 5.h,
+                    horizontal: 10.w,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'الوصف:',
-                        style: textTheme.titleLarge?.copyWith(
-                          color: const Color.fromARGB(255, 82, 90, 105),
-                          // fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        widget.proDesc.isNotEmpty
-                            ? widget.proDesc
-                            : 'لا يوجد وصف متاح لهذا المنتج.',
-                        style: textTheme.bodyMedium,
-                      ),
-                    ],
+                  sliver: SliverToBoxAdapter(
+                    child: _buildSpecifications(context),
                   ),
                 ),
-              ),
 
-              // contact us button
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 20.w,
-                    vertical: 15.h,
-                  ),
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secondary,
+                //product description
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.symmetric(
+                      horizontal: 10.w,
+                      vertical: 5.h,
                     ),
-                    onPressed: () {},
-                    icon: const Icon(Icons.chat_outlined),
-                    label: const Text('تواصل معنا '),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'الوصف:',
+                          style: textTheme.titleLarge?.copyWith(
+                            color: const Color.fromARGB(255, 82, 90, 105),
+                            // fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          widget.proDesc.isNotEmpty
+                              ? widget.proDesc
+                              : 'لا يوجد وصف متاح لهذا المنتج.',
+                          style: textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+
+                // زر المفضلة: يبدّل حالة حفظ المنتج عبر [FavoritesBloc].
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 15.h,
+                    ),
+                    child: _buildFavoriteButton(),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  /// يبني زر المفضلة اعتماداً على حالة القلب لهذا المنتج من [FavoritesBloc]:
+  /// قلب ممتلئ عند الإضافة، مع مؤشّر تحميل أثناء التبديل.
+  Widget _buildFavoriteButton() {
+    final materialId = widget.materialId;
+    // لا معرّف: تعذّر التبديل، نُبقي الزر معطّلاً.
+    if (materialId == null) {
+      return ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary),
+        onPressed: null,
+        icon: const Icon(Icons.favorite_border),
+        label: const Text("أضف إلى المفضلة"),
+      );
+    }
+
+    final isFavorite = context.select<FavoritesBloc, bool>((bloc) {
+      final state = bloc.state;
+      return state is FavoritesSuccess && state.isFavorite(materialId);
+    });
+    final isToggling = context.select<FavoritesBloc, bool>((bloc) {
+      final state = bloc.state;
+      return state is FavoritesSuccess && state.isToggling(materialId);
+    });
+
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isFavorite ? AppColors.error : AppColors.secondary,
+      ),
+      onPressed: isToggling
+          ? null
+          : () => context.read<FavoritesBloc>().add(
+              FavoriteToggled(materialId: materialId),
+            ),
+      icon: isToggling
+          ? SizedBox(
+              width: 18.r,
+              height: 18.r,
+              child: const CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
+      label: Text(isFavorite ? "إزالة من المفضلة" : "أضف إلى المفضلة"),
     );
   }
 

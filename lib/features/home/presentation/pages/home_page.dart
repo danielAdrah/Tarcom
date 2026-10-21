@@ -5,9 +5,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/colors.dart';
+import '../../../../core/routes/nav_paths.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../profile/presentation/bloc/get_user_profile/get_user_profile_bloc.dart';
 import '../../../products/presentation/pages/product_details_page.dart';
+import '../../../products/presentation/pages/products_company_page.dart';
 import '../../domain/entities/featured_material_entity.dart';
 import '../../../search/presentation/cubit/search_cubit.dart';
 import '../../../search/presentation/widgets/home_search_bar.dart';
@@ -105,29 +107,64 @@ class _HomeView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      //profile and log out icons
+                      //profile
                       FadeInLeft(
                         delay: Duration(milliseconds: 500),
                         child: Row(
                           children: [
                             InkWell(
                               onTap: () {
-                                context.pushNamed('userProfilePage');
+                                context.push(
+                                  NavPaths.withinBranch(
+                                    context,
+                                    NavPaths.userProfile,
+                                  ),
+                                );
                               },
-                              child: Container(
-                                padding: EdgeInsets.all(3.r),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(15.r),
-                                ),
-                                child: Icon(
-                                  Icons.person,
-                                  size: 30.w,
-                                  color: const Color.fromARGB(
-                                    255,
-                                    70,
-                                    148,
-                                    218,
+                              customBorder: const CircleBorder(),
+                              child: Padding(
+                                padding: EdgeInsets.all(4.r),
+                                child: Container(
+                                  width: 46.w,
+                                  height: 46.w,
+                                  padding: EdgeInsets.all(2.5.r),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF6EC1F5),
+                                        Color.fromARGB(255, 70, 148, 218),
+                                        Color(0xFF2F6FB0),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color.fromARGB(
+                                          255,
+                                          70,
+                                          148,
+                                          218,
+                                        ).withValues(alpha: 0.35),
+                                        blurRadius: 10,
+                                        spreadRadius: 0.5,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Container(
+                                    padding: EdgeInsets.all(3.r),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: ClipOval(
+                                      child: Image.asset(
+                                        'assets/img/user.png',
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -163,10 +200,22 @@ class _HomeView extends StatelessWidget {
                     children: [
                       // Category Item
                       CategoryLabel(
+                        // onTap: () {
+                        //   context.pushNamed(
+                        //     'productsCompanyPage',
+                        //     extra: 'لابتوبات',
+                        //   );
+                        // },
                         onTap: () {
-                          context.pushNamed(
-                            'productsCompanyPage',
-                            extra: 'لابتوبات',
+                          context.push(
+                            NavPaths.withinBranch(
+                              context,
+                              NavPaths.companies,
+                            ),
+                            extra: const ProductsCompanyArgs(
+                              categoryTitle: 'لابتوبات',
+                              categoryInternalName: 'laptops',
+                            ),
                           );
                         },
                         label: 'لابتوبات',
@@ -174,9 +223,15 @@ class _HomeView extends StatelessWidget {
                       ),
                       CategoryLabel(
                         onTap: () {
-                          context.pushNamed(
-                            'productsCompanyPage',
-                            extra: 'بطاريات',
+                          context.push(
+                            NavPaths.withinBranch(
+                              context,
+                              NavPaths.companies,
+                            ),
+                            extra: const ProductsCompanyArgs(
+                              categoryTitle: 'بطاريات',
+                              categoryInternalName: 'batteries',
+                            ),
                           );
                         },
                         label: 'بطاريات',
@@ -184,9 +239,15 @@ class _HomeView extends StatelessWidget {
                       ),
                       CategoryLabel(
                         onTap: () {
-                          context.pushNamed(
-                            'productsCompanyPage',
-                            extra: 'ألواح شمسية',
+                          context.push(
+                            NavPaths.withinBranch(
+                              context,
+                              NavPaths.companies,
+                            ),
+                            extra: const ProductsCompanyArgs(
+                              categoryTitle: 'ألواح شمسية',
+                              categoryInternalName: 'solar_boards',
+                            ),
                           );
                         },
                         label: 'ألواح شمسية',
@@ -194,19 +255,31 @@ class _HomeView extends StatelessWidget {
                       ),
                       CategoryLabel(
                         onTap: () {
-                          context.pushNamed(
-                            'productsCompanyPage',
-                            extra: 'أكبال',
+                          context.push(
+                            NavPaths.withinBranch(
+                              context,
+                              NavPaths.companies,
+                            ),
+                            extra: const ProductsCompanyArgs(
+                              categoryTitle: 'كابلات',
+                              categoryInternalName: 'cables',
+                            ),
                           );
                         },
-                        label: 'أكبال',
+                        label: 'كابلات',
                         img: 'assets/img/usb-connector.png',
                       ),
                       CategoryLabel(
                         onTap: () {
-                          context.pushNamed(
-                            'productsCompanyPage',
-                            extra: 'أدوات منزلية',
+                          context.push(
+                            NavPaths.withinBranch(
+                              context,
+                              NavPaths.companies,
+                            ),
+                            extra: const ProductsCompanyArgs(
+                              categoryTitle: 'أدوات منزلية',
+                              categoryInternalName: 'home_tech',
+                            ),
                           );
                         },
                         label: 'أدوات منزلية',
@@ -247,7 +320,9 @@ class _HomeView extends StatelessWidget {
                       ),
                       IconButton(
                         onPressed: () {
-                          context.pushNamed('featuredProductsPage');
+                          context.push(
+                            NavPaths.withinBranch(context, NavPaths.featured),
+                          );
                         },
                         icon: Icon(
                           Icons.arrow_forward_ios_rounded,
@@ -335,14 +410,15 @@ class _HomeView extends StatelessWidget {
           child: FeaturedProCard(
             material: material,
             onTap: () {
-              context.pushNamed(
-                'productDetailsPage',
+              context.push(
+                NavPaths.withinBranch(context, NavPaths.details),
                 extra: ProductDetailsArgs(
                   name: material.name,
                   price: material.consumerPriceLabel,
                   image: material.image ?? '',
                   desc: material.description,
                   category: material.categoryName,
+                  materialId: material.id,
                   specifications: material.specifications,
                 ),
               );

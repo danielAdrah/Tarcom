@@ -1,3 +1,4 @@
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -114,6 +115,16 @@ class _ContactusView extends StatelessWidget {
                             _LocationShimmer()
                           else
                             LocationTile(
+                              textTheme: textTheme,
+                              contactInfo: contactInfo,
+                            ),
+                          SizedBox(height: 10.h),
+                          headerTitle(textTheme, 'تابعنا'),
+                          SizedBox(height: 10.h),
+                          if (contactInfo == null)
+                            _SocialShimmer()
+                          else
+                            FacebookTile(
                               textTheme: textTheme,
                               contactInfo: contactInfo,
                             ),
@@ -317,6 +328,164 @@ class NumbersTile extends StatelessWidget {
   }
 }
 
+/// بليكة فيسبوك الحديثة: تفتح صفحة فيسبوك الخاصة بالشركة عند النقر.
+class FacebookTile extends StatelessWidget {
+  const FacebookTile({super.key, required this.textTheme, this.contactInfo});
+
+  final TextTheme textTheme;
+  final ContactInfoEntity? contactInfo;
+
+  static const Color _facebookBlue = Color(0xFF1877F2);
+
+  /// حزم تطبيقات فيسبوك الرسمية على أندرويد (الرئيسية ثم النسخة الخفيفة).
+  static const List<String> _facebookPackages = [
+    'com.facebook.katana',
+    'com.facebook.lite',
+  ];
+
+  Future<void> _launchFacebook(BuildContext context) async {
+    final raw = contactInfo?.facebook.trim() ?? '';
+    if (raw.isEmpty) return;
+
+    // توحيد الرابط: إزالة البروتوكول والنطاقات الفرعية ثم إعادة بناء رابط https نظيف.
+    final link = raw
+        .replaceFirst(RegExp(r'^https?://', caseSensitive: false), '')
+        .replaceFirst(RegExp(r'^www\.', caseSensitive: false), '')
+        .replaceFirst(RegExp(r'^m\.', caseSensitive: false), '');
+    if (!link.contains('facebook.com')) return;
+    final fbUrl = 'https://$link';
+
+    // 1) محاولة فتح الرابط داخل تطبيق فيسبوك مباشرة عبر intent موجّه لحزمته.
+    for (final pkg in _facebookPackages) {
+      try {
+        await AndroidIntent(
+          action: 'android.intent.action.VIEW',
+          data: fbUrl,
+          package: pkg,
+        ).launch();
+        return;
+      } catch (_) {
+        // التطبيق غير مثبّت أو لا يتعامل مع الرابط: نجرب الحزمة التالية.
+      }
+    }
+
+    // 2) fallback: فتح الرابط في المتصفح الافتراضي.
+    try {
+      await AndroidIntent(
+        action: 'android.intent.action.VIEW',
+        data: fbUrl,
+      ).launch();
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذّر فتح رابط فيسبوك على هذا الجهاز'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final facebook = contactInfo?.facebook.trim() ?? '';
+    if (facebook.isEmpty) return const SizedBox.shrink();
+
+    return FadeInUp(
+      duration: const Duration(milliseconds: 400),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          gradient: const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [_facebookBlue, Color(0xFF42A5F5)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _facebookBlue.withValues(alpha: 0.35),
+              blurRadius: 16.r,
+              offset: Offset(0, 6.h),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12.r),
+            splashColor: Colors.white.withValues(alpha: 0.15),
+            highlightColor: Colors.white.withValues(alpha: 0.08),
+            onTap: () => _launchFacebook(context),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 12.w),
+              child: Row(
+                children: [
+                  //facebook icon
+                  Container(
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.facebook_rounded,
+                      size: 28.h,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  //label + link
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'فيسبوك',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            facebook,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  //open indicator
+                  Container(
+                    padding: EdgeInsets.all(3.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(15.r),
+                    ),
+                    child: Icon(
+                      Icons.arrow_outward_rounded,
+                      size: 22.h,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// هيكل shimmer لبليكة الأرقام أثناء التحميل.
 class _NumbersShimmer extends StatelessWidget {
   @override
@@ -344,6 +513,24 @@ class _LocationShimmer extends StatelessWidget {
       highlightColor: AppColors.skeletonHighlight,
       child: Container(
         height: 190.h,
+        decoration: BoxDecoration(
+          color: AppColors.skeletonBase,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+      ),
+    );
+  }
+}
+
+/// هيكل shimmer لبليكة التواصل الاجتماعي أثناء التحميل.
+class _SocialShimmer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.skeletonBase,
+      highlightColor: AppColors.skeletonHighlight,
+      child: Container(
+        height: 72.h,
         decoration: BoxDecoration(
           color: AppColors.skeletonBase,
           borderRadius: BorderRadius.circular(12.r),

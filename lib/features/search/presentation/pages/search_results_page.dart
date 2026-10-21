@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/common/custom_indecator.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/routes/nav_paths.dart';
 import '../../../favorites/presentation/bloc/favorites/favorites_bloc.dart';
 import '../../../products/domain/entities/material_entity.dart';
 import '../../../products/presentation/bloc/bloc/get_materials_bloc.dart';
@@ -28,22 +29,17 @@ class SearchResultsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) => sl<GetMaterialsBloc>()
-            ..add(
-              GetMaterialsRequested(
-                isActive: true,
-                search: query,
-                ordering: '-created_at',
-              ),
-            ),
+    // [FavoritesBloc] مشترك على مستوى الـ shell (انظر `route_main.dart`)،
+    // فنتفادى إنشاء نسخة محلية هنا لتبقى حالة القلب متزامنة مع بقية الصفحات.
+    return BlocProvider(
+      create: (_) => sl<GetMaterialsBloc>()
+        ..add(
+          GetMaterialsRequested(
+            isActive: true,
+            search: query,
+            ordering: '-created_at',
+          ),
         ),
-        BlocProvider(
-          create: (_) => sl<FavoritesBloc>()..add(const FavoritesRequested()),
-        ),
-      ],
       child: _SearchResultsView(query: query),
     );
   }
@@ -525,14 +521,15 @@ class _ResultCell extends StatelessWidget {
     );
 
     return ProductCell(
-      onTap: () => context.pushNamed(
-        'productDetailsPage',
+      onTap: () => context.push(
+        NavPaths.withinBranch(context, NavPaths.details),
         extra: ProductDetailsArgs(
           name: material.displayTitle,
           price: material.consumerPriceLabel,
           image: material.image ?? '',
           desc: material.displayDescription,
           category: material.categoryName,
+          materialId: material.id,
           specifications: material.specifications,
         ),
       ),

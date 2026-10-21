@@ -19,7 +19,11 @@ final class FavoritesLoading extends FavoritesState {
 /// - [favoriteIds]: معرّفات المواد المُفضَّلة (مصدر الحقيقة لحالة القلب).
 /// - [togglingIds]: معرّفات المواد قيد التبديل لعرض مؤشر على بطاقتها.
 /// - [lastMessage]/[lastError]: رسالة لمرة واحدة يستمع لها العرض (SnackBar).
+/// - [revision]: عدّاد يتزايد مع كل انبعاث، لضمان اختلاف حالة
+///   `FavoritesSuccess` بين دفعتين حتى لو تطابق المحتوى، فينتقل
+///   `BlocBuilder` في صفحة المفضلة إلى بناء جديد فور أي تبديل.
 final class FavoritesSuccess extends FavoritesState {
+  final int revision;
   final List<FavoriteMaterialEntity> favorites;
   final int count;
   final Set<int> favoriteIds;
@@ -28,6 +32,7 @@ final class FavoritesSuccess extends FavoritesState {
   final String? lastError;
 
   const FavoritesSuccess({
+    required this.revision,
     required this.favorites,
     required this.count,
     required this.favoriteIds,
@@ -42,6 +47,7 @@ final class FavoritesSuccess extends FavoritesState {
 
   @override
   List<Object> get props => [
+    revision,
     favorites,
     count,
     favoriteIds,

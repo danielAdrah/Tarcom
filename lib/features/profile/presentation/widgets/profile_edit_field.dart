@@ -18,6 +18,7 @@ class ProfileEditField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final String? hintText;
   final int? maxLength;
+  final String? prefixText;
 
   const ProfileEditField({
     super.key,
@@ -30,6 +31,7 @@ class ProfileEditField extends StatelessWidget {
     this.inputFormatters,
     this.hintText,
     this.maxLength,
+    this.prefixText,
   });
 
   @override
@@ -77,6 +79,11 @@ class ProfileEditField extends StatelessWidget {
                   hintText: hintText,
                   hintStyle: textTheme.bodySmall?.copyWith(
                     color: AppColors.textDisabled,
+                  ),
+                  prefixText: prefixText,
+                  prefixStyle: textTheme.titleSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
                   ),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,

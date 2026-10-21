@@ -14,3 +14,6 @@ export '../../features/auth/presentation/pages/verfiy_code_page.dart';
 export '../../features/home/presentation/pages/featured_products_page.dart';
 export '../../features/search/presentation/pages/search_results_page.dart';
 export '../../features/profile/presentation/pages/user_profile_page.dart';
+export '../../features/favorites/presentation/pages/favorites_page.dart';
+export '../../features/contact-us/presentation/pages/contactUs_page.dart';
+export 'nav_paths.dart';

@@ -7,6 +7,7 @@ abstract class CompaniesRemoteDataSource {
   Future<List<CompanyModel>> getMaterialCompanies({
     int? categoryId,
     bool? isActive,
+    String? categoryInternalName,
   });
 }
 
@@ -21,11 +22,13 @@ class CompaniesRemoteDataSourceImpl implements CompaniesRemoteDataSource {
   Future<List<CompanyModel>> getMaterialCompanies({
     int? categoryId,
     bool? isActive,
+    String? categoryInternalName,
   }) async {
     // المعاملات اختيارية حسب الـ API، نمرّر فقط غير الفارغة منها.
     final queryParameters = <String, dynamic>{
       'category': ?categoryId,
       'is_active': ?isActive,
+      'category_internal_name': ?categoryInternalName,
     };
 
     // الاستجابة مصفوفة JSON بسيطة غير منطّقة.

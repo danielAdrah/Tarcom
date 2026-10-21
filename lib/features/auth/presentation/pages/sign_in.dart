@@ -44,7 +44,7 @@ class _SignInPageState extends State<SignInPage> {
               //   ),
               // );
 
-              context.pushNamed('mainNavBar');
+              context.goNamed('homePage');
             }
 
             // =====================================================

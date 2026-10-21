@@ -7,6 +7,7 @@ class ContactInfoModel extends ContactInfoEntity {
     required super.phone2,
     required super.email,
     required super.address,
+    required super.facebook,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -18,6 +19,7 @@ class ContactInfoModel extends ContactInfoEntity {
       phone2: json['phone2'] as String? ?? '',
       email: json['email'] as String? ?? '',
       address: json['address'] as String? ?? '',
+      facebook: json['facebook'] as String? ?? '',
       createdAt:
           DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),

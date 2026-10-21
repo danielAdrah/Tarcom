@@ -28,6 +28,7 @@ class GetCompaniesBloc extends Bloc<GetCompaniesEvent, GetCompaniesState> {
       final companies = await getMaterialCompaniesUseCase(
         categoryId: event.categoryId,
         isActive: event.isActive,
+        categoryInternalName: event.categoryInternalName,
       );
 
       emit(GetCompaniesSuccess(companies: companies));

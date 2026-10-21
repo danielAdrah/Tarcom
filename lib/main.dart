@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,11 +14,17 @@ import 'features/auth/presentation/bloc/sign_in.dart/bloc/sign_in_bloc.dart';
 import 'features/auth/presentation/bloc/sign_up.dart/bloc/sign_up_bloc.dart';
 import 'features/home/presentation/bloc/get_featured_materials/get_featured_materials_bloc.dart';
 import 'features/products/presentation/bloc/bloc/get_categories_bloc.dart';
+import 'features/favorites/presentation/bloc/favorites/favorites_bloc.dart';
 import 'generated/l10n.dart';
 import 'core/constants/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // تثبيت اتجاه الشاشة على الوضع الرأسي حتى لا تدور الصفحة عند تدوير الهاتف.
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   await GetStorage.init();
   await di.initDependencies();
   runApp(const MyApp());
@@ -75,6 +82,7 @@ class _MyAppState extends State<MyApp> {
           BlocProvider(create: (context) => di.sl<SignInBloc>()),
           BlocProvider(create: (context) => di.sl<GetCategoriesBloc>()),
           BlocProvider(create: (context) => di.sl<GetFeaturedMaterialsBloc>()),
+          BlocProvider(create: (context) => di.sl<FavoritesBloc>()),
         ],
         child: MaterialApp.router(
           scaffoldMessengerKey: _scaffoldMessengerKey,

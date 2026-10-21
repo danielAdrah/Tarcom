@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/routes/nav_paths.dart';
 import '../../../products/presentation/pages/product_details_page.dart';
 import '../bloc/get_featured_materials/get_featured_materials_bloc.dart';
 import '../widgets/featured_products_card.dart';
@@ -316,14 +317,15 @@ class _FeaturedProductsViewState extends State<_FeaturedProductsView> {
                 child: FeaturedProCard(
                   material: material,
                   onTap: () {
-                    context.pushNamed(
-                      'productDetailsPage',
+                    context.push(
+                      NavPaths.withinBranch(context, NavPaths.details),
                       extra: ProductDetailsArgs(
                         name: material.name,
                         price: material.consumerPriceLabel,
                         image: material.image ?? '',
                         desc: material.description,
                         category: material.categoryName,
+                        materialId: material.id,
                         specifications: material.specifications,
                       ),
                     );

@@ -26,6 +26,6 @@ class AuthRouteResolver {
   /// Assumes connectivity has already been verified.
   static void goNext(BuildContext context) {
     if (!context.mounted) return;
-    context.goNamed(hasValidSession() ? 'mainNavBar' : 'signInPage');
+    context.goNamed(hasValidSession() ? 'homePage' : 'signInPage');
   }
 }
