@@ -18,6 +18,8 @@ class MaterialModel extends MaterialEntity {
     required super.companyName,
     required super.supplierPrice,
     required super.consumerPrice,
+    super.supplierPriceInSp,
+    super.customerPriceInSp,
     required super.isActive,
     required super.expireDate,
     required super.specKey1,
@@ -35,6 +37,8 @@ class MaterialModel extends MaterialEntity {
     required super.image3,
     required super.image4,
     required super.image5,
+    super.infoUrl,
+    super.infoFile,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -69,6 +73,9 @@ class MaterialModel extends MaterialEntity {
           '',
       supplierPrice: _parsePrice(json['supplier_price']),
       consumerPrice: _parsePrice(json['consumer_price']),
+      // الأسعار بالليرة السورية: حقول جديدة `supplier_price_in_sp` و`customer_price_in_sp`.
+      supplierPriceInSp: _parsePrice(json['supplier_price_in_sp']),
+      customerPriceInSp: _parsePrice(json['customer_price_in_sp']),
       isActive: json['is_active'] as bool? ?? false,
       expireDate: DateTime.tryParse(json['expire_date'] as String? ?? ''),
       specKey1: json['spec_key1'] as String?,
@@ -86,6 +93,13 @@ class MaterialModel extends MaterialEntity {
       image3: json['image3'] as String?,
       image4: json['image4'] as String?,
       image5: json['image5'] as String?,
+      // حقول اختيارية جديدة: رابط/ملف المعلومات. تُترك null عند الغياب.
+      infoUrl: (json['info_url'] as String?)?.trim().isNotEmpty == true
+          ? (json['info_url'] as String).trim()
+          : null,
+      infoFile: (json['info_file'] as String?)?.trim().isNotEmpty == true
+          ? (json['info_file'] as String).trim()
+          : null,
       createdAt:
           DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),

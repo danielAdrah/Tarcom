@@ -1,5 +1,3 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
@@ -28,20 +26,10 @@ class LogOutBloc extends Bloc<LogOutEvent, LogOutState> {
     // في جلسة منتهية. نسجّل تفاصيل الاستثناء للتشخيص دون إظهارها للمستخدم.
     try {
       await logOutUseCase();
-    } on ApiException catch (e, s) {
-      developer.log(
-        'logout blacklist failed',
-        name: 'LogOutBloc',
-        error: e,
-        stackTrace: s,
-      );
-    } catch (e, s) {
-      developer.log(
-        'logout unexpected error',
-        name: 'LogOutBloc',
-        error: e,
-        stackTrace: s,
-      );
+    } on ApiException {
+      // blacklist failed — session is still cleared locally.
+    } catch (_) {
+      // unexpected error — session is still cleared locally.
     }
 
     emit(const LogOutSuccess());

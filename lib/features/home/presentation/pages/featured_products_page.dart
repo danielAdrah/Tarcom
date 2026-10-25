@@ -322,11 +322,14 @@ class _FeaturedProductsViewState extends State<_FeaturedProductsView> {
                       extra: ProductDetailsArgs(
                         name: material.name,
                         price: material.consumerPriceLabel,
+                        priceInSp: material.customerPriceInSpLabel,
                         image: material.image ?? '',
                         desc: material.description,
                         category: material.categoryName,
                         materialId: material.id,
                         specifications: material.specifications,
+                        infoUrl: material.infoUrl,
+                        infoFile: material.infoFile,
                       ),
                     );
                   },

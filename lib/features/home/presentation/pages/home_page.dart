@@ -208,10 +208,7 @@ class _HomeView extends StatelessWidget {
                         // },
                         onTap: () {
                           context.push(
-                            NavPaths.withinBranch(
-                              context,
-                              NavPaths.companies,
-                            ),
+                            NavPaths.withinBranch(context, NavPaths.companies),
                             extra: const ProductsCompanyArgs(
                               categoryTitle: 'لابتوبات',
                               categoryInternalName: 'laptops',
@@ -224,10 +221,7 @@ class _HomeView extends StatelessWidget {
                       CategoryLabel(
                         onTap: () {
                           context.push(
-                            NavPaths.withinBranch(
-                              context,
-                              NavPaths.companies,
-                            ),
+                            NavPaths.withinBranch(context, NavPaths.companies),
                             extra: const ProductsCompanyArgs(
                               categoryTitle: 'بطاريات',
                               categoryInternalName: 'batteries',
@@ -240,26 +234,20 @@ class _HomeView extends StatelessWidget {
                       CategoryLabel(
                         onTap: () {
                           context.push(
-                            NavPaths.withinBranch(
-                              context,
-                              NavPaths.companies,
-                            ),
+                            NavPaths.withinBranch(context, NavPaths.companies),
                             extra: const ProductsCompanyArgs(
-                              categoryTitle: 'ألواح شمسية',
+                              categoryTitle: 'طاقة بديلة',
                               categoryInternalName: 'solar_boards',
                             ),
                           );
                         },
-                        label: 'ألواح شمسية',
+                        label: 'طاقة بديلة',
                         img: 'assets/img/solar-system.png',
                       ),
                       CategoryLabel(
                         onTap: () {
                           context.push(
-                            NavPaths.withinBranch(
-                              context,
-                              NavPaths.companies,
-                            ),
+                            NavPaths.withinBranch(context, NavPaths.companies),
                             extra: const ProductsCompanyArgs(
                               categoryTitle: 'كابلات',
                               categoryInternalName: 'cables',
@@ -272,10 +260,7 @@ class _HomeView extends StatelessWidget {
                       CategoryLabel(
                         onTap: () {
                           context.push(
-                            NavPaths.withinBranch(
-                              context,
-                              NavPaths.companies,
-                            ),
+                            NavPaths.withinBranch(context, NavPaths.companies),
                             extra: const ProductsCompanyArgs(
                               categoryTitle: 'أدوات منزلية',
                               categoryInternalName: 'home_tech',
@@ -308,29 +293,32 @@ class _HomeView extends StatelessWidget {
                 delay: Duration(milliseconds: 900),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(15.r, 0, 15.r, 10.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'المنتجات المميزة',
-                        style: textTheme.titleMedium?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
+                  child: InkWell(
+                    onTap: () {
+                      context.push(
+                        NavPaths.withinBranch(context, NavPaths.featured),
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'المنتجات المميزة',
+                          style: textTheme.titleMedium?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          context.push(
-                            NavPaths.withinBranch(context, NavPaths.featured),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 20.w,
-                          color: AppColors.primary,
+                        IconButton(
+                          onPressed: () {},
+                          icon: Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 20.w,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -415,11 +403,14 @@ class _HomeView extends StatelessWidget {
                 extra: ProductDetailsArgs(
                   name: material.name,
                   price: material.consumerPriceLabel,
+                  priceInSp: material.customerPriceInSpLabel,
                   image: material.image ?? '',
                   desc: material.description,
                   category: material.categoryName,
                   materialId: material.id,
                   specifications: material.specifications,
+                  infoUrl: material.infoUrl,
+                  infoFile: material.infoFile,
                 ),
               );
             },

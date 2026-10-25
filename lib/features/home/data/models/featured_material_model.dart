@@ -22,6 +22,8 @@ class FeaturedMaterialModel extends FeaturedMaterialEntity {
     required super.companyDetail,
     required super.supplierPrice,
     required super.consumerPrice,
+    required super.supplierPriceInSp,
+    required super.customerPriceInSp,
     required super.isActive,
     required super.expireDate,
     required super.specKey1,
@@ -39,6 +41,8 @@ class FeaturedMaterialModel extends FeaturedMaterialEntity {
     required super.image3,
     required super.image4,
     required super.image5,
+    required super.infoFile,
+    required super.infoUrl,
     required super.createdAt,
     required super.updatedAt,
     required super.featureReason,
@@ -74,6 +78,9 @@ class FeaturedMaterialModel extends FeaturedMaterialEntity {
           : null,
       supplierPrice: _parsePrice(json['supplier_price']),
       consumerPrice: _parsePrice(json['consumer_price']),
+      // الأسعار بالليرة السورية: حقول جديدة `supplier_price_in_sp` و`customer_price_in_sp`.
+      supplierPriceInSp: _parsePrice(json['supplier_price_in_sp']),
+      customerPriceInSp: _parsePrice(json['customer_price_in_sp']),
       isActive: json['is_active'] as bool? ?? false,
       expireDate: DateTime.tryParse(json['expire_date'] as String? ?? ''),
       specKey1: json['spec_key1'] as String?,
@@ -91,6 +98,9 @@ class FeaturedMaterialModel extends FeaturedMaterialEntity {
       image3: json['image3'] as String?,
       image4: json['image4'] as String?,
       image5: json['image5'] as String?,
+      // حقول المعلومات الإضافية الجديدة في الاستجابة.
+      infoFile: json['info_file'] as String?,
+      infoUrl: json['info_url'] as String?,
       createdAt:
           DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),

@@ -33,7 +33,6 @@ class _SignInPageState extends State<SignInPage> {
             // =====================================================
 
             if (state is SignInSuccess) {
-              print("sign in good");
 
               // ScaffoldMessenger.of(context).showSnackBar(
               //   SnackBar(
@@ -52,7 +51,6 @@ class _SignInPageState extends State<SignInPage> {
             // =====================================================
 
             if (state is SignInFailure) {
-              print("sign in bad : ${state.message}");
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
               ScaffoldMessenger.of(context).showSnackBar(
@@ -168,12 +166,6 @@ class _SignInPageState extends State<SignInPage> {
                               delay: Duration(milliseconds: 1200),
                               child: ElevatedButton(
                                 onPressed: () {
-                                  print(
-                                    "-------mail : ${emailController.text.trim()}",
-                                  );
-                                  print(
-                                    "-------password : ${passwordController.text}",
-                                  );
                                   context.read<SignInBloc>().add(
                                     SignInSubmitted(
                                       email: emailController.text.trim(),

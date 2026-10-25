@@ -160,11 +160,14 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
       extra: ProductDetailsArgs(
         name: material.displayTitle,
         price: material.consumerPriceLabel,
+        priceInSp: material.customerPriceInSpLabel,
         image: material.image ?? '',
         desc: material.displayDescription,
         category: material.categoryName,
         materialId: material.id,
         specifications: material.specifications,
+        infoUrl: material.infoUrl,
+        infoFile: material.infoFile,
       ),
     );
   }

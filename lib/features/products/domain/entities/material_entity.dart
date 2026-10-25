@@ -25,6 +25,11 @@ class MaterialEntity {
 
   final double supplierPrice;
   final double consumerPrice;
+
+  /// الأسعار بالليرة السورية (SP) كما يرسلها الـ API في حقول
+  /// `supplier_price_in_sp` و`customer_price_in_sp`.
+  final double supplierPriceInSp;
+  final double customerPriceInSp;
   final bool isActive;
   final DateTime? expireDate;
 
@@ -45,6 +50,12 @@ class MaterialEntity {
   final String? image4;
   final String? image5;
 
+  /// رابط معلوماتي اختياري (`info_url`) يفتح في المتصفح.
+  final String? infoUrl;
+
+  /// ملف معلوماتي اختياري (`info_file`): PDF أو صورة، حسب الامتداد.
+  final String? infoFile;
+
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -64,6 +75,8 @@ class MaterialEntity {
     required this.companyName,
     required this.supplierPrice,
     required this.consumerPrice,
+    this.supplierPriceInSp = 0,
+    this.customerPriceInSp = 0,
     required this.isActive,
     required this.expireDate,
     required this.specKey1,
@@ -81,6 +94,8 @@ class MaterialEntity {
     required this.image3,
     required this.image4,
     required this.image5,
+    this.infoUrl,
+    this.infoFile,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -100,6 +115,27 @@ class MaterialEntity {
       consumerPrice == consumerPrice.roundToDouble()
       ? consumerPrice.toStringAsFixed(0)
       : consumerPrice.toStringAsFixed(2);
+
+  /// سعر المستهلك بالليرة السورية بصيغة نصية مع فواصل الآلاف (مثل 25,200).
+  String get customerPriceInSpLabel => _formatWithThousands(customerPriceInSp);
+
+  /// إدراج فواصل الآلاف في رقم نصي: "25200" -> "25,200".
+  static String _formatWithThousands(double value) {
+    final rounded = value.roundToDouble();
+    final isWhole = value == rounded;
+    final digits = isWhole
+        ? rounded.toStringAsFixed(0)
+        : value.toStringAsFixed(2);
+
+    final parts = digits.split('.');
+    final intPart = parts[0];
+    final buffer = StringBuffer();
+    for (var i = 0; i < intPart.length; i++) {
+      if (i > 0 && (intPart.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(intPart[i]);
+    }
+    return parts.length > 1 ? '$buffer.${parts[1]}' : buffer.toString();
+  }
 
   /// الأزواج (اسم/قيمة) للمواصفات غير الفارغة، جاهزة لعرضها في صفحة التفاصيل.
   List<MapEntry<String, String>> get specifications {

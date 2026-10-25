@@ -32,6 +32,11 @@ class _SignUpPageState extends State<SignUpPage> {
   /// التحقق من الجزء المحلي فقط: 9 أرقام بعد البادئة `_phonePrefix`.
   static final RegExp _localPhoneRegex = RegExp(r'^\d{9}$');
 
+  /// كلمة المرور: 8 أحرف على الأقل وتحتوي على أرقام وحروف معاً.
+  static final RegExp _passwordRegex = RegExp(r'^(?=.*[A-Za-z])(?=.*\d).{8,}$');
+
+  bool _isValidPassword(String password) => _passwordRegex.hasMatch(password);
+
   @override
   void dispose() {
     firstNameController.dispose();
@@ -88,7 +93,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
           if (state is SignUpSuccess) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            print("sign up good");
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -107,7 +111,6 @@ class _SignUpPageState extends State<SignUpPage> {
           // =====================================================
 
           if (state is SignUpFailure) {
-            print("sign up bad : ${state.message}");
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -351,6 +354,20 @@ class _SignUpPageState extends State<SignUpPage> {
                                       SnackBar(
                                         content: Text(
                                           'يجب أن يكون رقم الهاتف 9 أرقام (مثال: 991234567).',
+                                        ),
+                                        behavior: SnackBarBehavior.floating,
+                                        duration: const Duration(seconds: 4),
+                                        backgroundColor: AppColors.error,
+                                      ),
+                                    );
+                                    return;
+                                  } else if (!_isValidPassword(
+                                    passwordController.text,
+                                  )) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل وتضم أرقاماً وحروفاً معاً.',
                                         ),
                                         behavior: SnackBarBehavior.floating,
                                         duration: const Duration(seconds: 4),

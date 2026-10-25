@@ -41,6 +41,11 @@ class FeaturedMaterialEntity {
   final CompanyDetailEntity? companyDetail;
   final double supplierPrice;
   final double consumerPrice;
+
+  /// الأسعار بالليرة السورية (SP) كما يرسلها الـ API في حقول
+  /// `supplier_price_in_sp` و`customer_price_in_sp`.
+  final double supplierPriceInSp;
+  final double customerPriceInSp;
   final bool isActive;
   final DateTime? expireDate;
   final String? specKey1;
@@ -58,6 +63,10 @@ class FeaturedMaterialEntity {
   final String? image3;
   final String? image4;
   final String? image5;
+
+  /// ملف/رابط المعلومات الإضافية من حقلي `info_file` و`info_url`.
+  final String? infoFile;
+  final String? infoUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
   final FeatureReason featureReason;
@@ -80,6 +89,8 @@ class FeaturedMaterialEntity {
     required this.companyDetail,
     required this.supplierPrice,
     required this.consumerPrice,
+    required this.supplierPriceInSp,
+    required this.customerPriceInSp,
     required this.isActive,
     required this.expireDate,
     required this.specKey1,
@@ -97,6 +108,8 @@ class FeaturedMaterialEntity {
     required this.image3,
     required this.image4,
     required this.image5,
+    required this.infoFile,
+    required this.infoUrl,
     required this.createdAt,
     required this.updatedAt,
     required this.featureReason,
@@ -113,6 +126,27 @@ class FeaturedMaterialEntity {
       consumerPrice == consumerPrice.roundToDouble()
       ? consumerPrice.toStringAsFixed(0)
       : consumerPrice.toStringAsFixed(2);
+
+  /// سعر المستهلك بالليرة السورية بصيغة نصية مع فواصل الآلاف (مثل 49,000).
+  String get customerPriceInSpLabel => _formatWithThousands(customerPriceInSp);
+
+  /// إدراج فواصل الآلاف في رقم نصي: "49000" -> "49,000".
+  static String _formatWithThousands(double value) {
+    final rounded = value.roundToDouble();
+    final isWhole = value == rounded;
+    final digits = isWhole
+        ? rounded.toStringAsFixed(0)
+        : value.toStringAsFixed(2);
+
+    final parts = digits.split('.');
+    final intPart = parts[0];
+    final buffer = StringBuffer();
+    for (var i = 0; i < intPart.length; i++) {
+      if (i > 0 && (intPart.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(intPart[i]);
+    }
+    return parts.length > 1 ? '$buffer.${parts[1]}' : buffer.toString();
+  }
 
   /// الأزواج (اسم/قيمة) للمواصفات غير الفارغة، جاهزة لعرضها في صفحة التفاصيل.
   List<MapEntry<String, String>> get specifications {

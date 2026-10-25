@@ -1,9 +1,11 @@
-import 'package:android_intent_plus/android_intent.dart';
+import 'dart:async';
+
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/di/injection_container.dart';
@@ -23,119 +25,152 @@ class ContactusPage extends StatelessWidget {
   }
 }
 
-class _ContactusView extends StatelessWidget {
+class _ContactusView extends StatefulWidget {
   const _ContactusView();
+
+  @override
+  State<_ContactusView> createState() => _ContactusViewState();
+}
+
+class _ContactusViewState extends State<_ContactusView> {
+  // السحب للتحديث: ننتهي من المؤشر عند انتهاء حالة التحميل.
+  Future<void> _onRefresh() async {
+    final bloc = context.read<GetContactInfoBloc>();
+    final completer = Completer<void>();
+
+    final subscription = bloc.stream.listen((state) {
+      if (state is! GetContactInfoLoading && !completer.isCompleted) {
+        completer.complete();
+      }
+    });
+
+    bloc.add(const GetContactInfoRefreshRequested());
+
+    // فترة أطول قليلاً لإظهار مؤشر التحديث بشكل مريح.
+    await Future.delayed(const Duration(milliseconds: 600));
+    await completer.future.timeout(
+      const Duration(seconds: 30),
+      onTimeout: () {},
+    );
+    await subscription.cancel();
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       body: SafeArea(
-        child: FadeInUp(
-          delay: Duration(milliseconds: 400),
-          child: CustomScrollView(
-            physics: BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                automaticallyImplyLeading: false,
-                backgroundColor: AppColors.background,
-                surfaceTintColor: Colors.transparent,
-                elevation: 0,
-                toolbarHeight: 72.h,
-                title: Text(
-                  'تواصل معنا',
-                  style: textTheme.titleLarge?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                centerTitle: true,
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          color: AppColors.primary,
+          child: FadeInUp(
+            delay: Duration(milliseconds: 400),
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
+              slivers: [
+                SliverAppBar(
+                  automaticallyImplyLeading: false,
+                  backgroundColor: AppColors.background,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
+                  toolbarHeight: 72.h,
+                  title: Text(
+                    'تواصل معنا',
+                    style: textTheme.titleLarge?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  centerTitle: true,
+                ),
 
-              //banner section
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(8.r, 10.h, 8.r, 20.h),
-                  child: Container(
-                    height: 220.h,
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          blurRadius: 18.r,
-                          offset: Offset(0, 7.h),
+                //banner section
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(8.r, 10.h, 8.r, 20.h),
+                    child: Container(
+                      height: 220.h,
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            blurRadius: 18.r,
+                            offset: Offset(0, 7.h),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 4.r,
+                            offset: Offset(0, 2.h),
+                          ),
+                        ],
+                        borderRadius: BorderRadius.circular(15.r),
+                        image: const DecorationImage(
+                          image: AssetImage('assets/img/contactusbanner.png'),
+                          fit: BoxFit.fill,
                         ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 4.r,
-                          offset: Offset(0, 2.h),
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(15.r),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/img/contactusbanner.png'),
-                        fit: BoxFit.fill,
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              //contactUs info section
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w),
-                  child: BlocBuilder<GetContactInfoBloc, GetContactInfoState>(
-                    builder: (context, state) {
-                      if (state is GetContactInfoFailure) {
-                        return _ContactFailure(message: state.message);
-                      }
+                //contactUs info section
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    child: BlocBuilder<GetContactInfoBloc, GetContactInfoState>(
+                      builder: (context, state) {
+                        if (state is GetContactInfoFailure) {
+                          return _ContactFailure(message: state.message);
+                        }
 
-                      final contactInfo = state is GetContactInfoSuccess
-                          ? state.contactInfo
-                          : null;
+                        final contactInfo = state is GetContactInfoSuccess
+                            ? state.contactInfo
+                            : null;
 
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          headerTitle(textTheme, 'تواصل مباشرة'),
-                          SizedBox(height: 10.h),
-                          if (contactInfo == null)
-                            _NumbersShimmer()
-                          else
-                            NumbersTile(
-                              textTheme: textTheme,
-                              contactInfo: contactInfo,
-                            ),
-                          SizedBox(height: 10.h),
-                          headerTitle(textTheme, 'موقعنا'),
-                          SizedBox(height: 10.h),
-                          if (contactInfo == null)
-                            _LocationShimmer()
-                          else
-                            LocationTile(
-                              textTheme: textTheme,
-                              contactInfo: contactInfo,
-                            ),
-                          SizedBox(height: 10.h),
-                          headerTitle(textTheme, 'تابعنا'),
-                          SizedBox(height: 10.h),
-                          if (contactInfo == null)
-                            _SocialShimmer()
-                          else
-                            FacebookTile(
-                              textTheme: textTheme,
-                              contactInfo: contactInfo,
-                            ),
-                          SizedBox(height: 10.h),
-                        ],
-                      );
-                    },
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            headerTitle(textTheme, 'تواصل مباشرة'),
+                            SizedBox(height: 10.h),
+                            if (contactInfo == null)
+                              _NumbersShimmer()
+                            else
+                              NumbersTile(
+                                textTheme: textTheme,
+                                contactInfo: contactInfo,
+                              ),
+                            SizedBox(height: 10.h),
+                            headerTitle(textTheme, 'موقعنا'),
+                            SizedBox(height: 10.h),
+                            if (contactInfo == null)
+                              _LocationShimmer()
+                            else
+                              LocationTile(
+                                textTheme: textTheme,
+                                contactInfo: contactInfo,
+                              ),
+                            SizedBox(height: 10.h),
+                            headerTitle(textTheme, 'تابعنا'),
+                            SizedBox(height: 10.h),
+                            if (contactInfo == null)
+                              _SocialShimmer()
+                            else
+                              FacebookTile(
+                                textTheme: textTheme,
+                                contactInfo: contactInfo,
+                              ),
+                            SizedBox(height: 10.h),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -337,12 +372,6 @@ class FacebookTile extends StatelessWidget {
 
   static const Color _facebookBlue = Color(0xFF1877F2);
 
-  /// حزم تطبيقات فيسبوك الرسمية على أندرويد (الرئيسية ثم النسخة الخفيفة).
-  static const List<String> _facebookPackages = [
-    'com.facebook.katana',
-    'com.facebook.lite',
-  ];
-
   Future<void> _launchFacebook(BuildContext context) async {
     final raw = contactInfo?.facebook.trim() ?? '';
     if (raw.isEmpty) return;
@@ -355,26 +384,20 @@ class FacebookTile extends StatelessWidget {
     if (!link.contains('facebook.com')) return;
     final fbUrl = 'https://$link';
 
-    // 1) محاولة فتح الرابط داخل تطبيق فيسبوك مباشرة عبر intent موجّه لحزمته.
-    for (final pkg in _facebookPackages) {
-      try {
-        await AndroidIntent(
-          action: 'android.intent.action.VIEW',
-          data: fbUrl,
-          package: pkg,
-        ).launch();
-        return;
-      } catch (_) {
-        // التطبيق غير مثبّت أو لا يتعامل مع الرابط: نجرب الحزمة التالية.
-      }
-    }
-
-    // 2) fallback: فتح الرابط في المتصفح الافتراضي.
+    // فتح الرابط في التطبيق الخارجي (تطبيق فيسبوك إن كان مثبتًا، وإلا المتصفح الافتراضي).
     try {
-      await AndroidIntent(
-        action: 'android.intent.action.VIEW',
-        data: fbUrl,
-      ).launch();
+      final opened = await launchUrl(
+        Uri.parse(fbUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذّر فتح رابط فيسبوك على هذا الجهاز'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

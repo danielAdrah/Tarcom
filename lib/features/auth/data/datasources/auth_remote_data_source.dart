@@ -1,5 +1,3 @@
-import 'dart:developer' as developer;
-
 import 'package:get_storage/get_storage.dart';
 
 import '../../../../core/api/apiKeys/end_point.dart';
@@ -125,23 +123,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       late final SignInResponseModel signInResponse;
       try {
         signInResponse = SignInResponseModel.fromJson(response);
-      } catch (e, s) {
-        developer.log(
-          'signIn model parse failed [${e.runtimeType}]',
-          name: 'AuthRemoteDataSource',
-          error: e,
-          stackTrace: s,
-        );
+      } catch (_) {
         rethrow;
       }
       //get the tokens
       final String accessToken = signInResponse.tokens.access;
       final String refreshToken = signInResponse.tokens.refresh;
-
-      developer.log(
-        'signIn success, token acquired',
-        name: 'AuthRemoteDataSource',
-      );
 
       //store the tokens
       await storage.write(StorageKeys.accessToken, accessToken);
@@ -162,10 +149,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         storage.read<String>(StorageKeys.refreshToken) ?? '';
 
     if (refreshToken.isEmpty) {
-      developer.log(
-        'refresh skipped: no refresh token stored',
-        name: 'AuthRemoteDataSource',
-      );
       throw UnauthorizedException(message: 'لا توجد جلسة قابلة للتحديث.');
     }
 
@@ -187,11 +170,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await storage.write(StorageKeys.refreshToken, tokens.refresh);
     }
 
-    developer.log(
-      'access token refreshed successfully',
-      name: 'AuthRemoteDataSource',
-    );
-
     return tokens;
   }
 
@@ -210,10 +188,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           headers: {'Accept-Language': 'ar'},
         );
       }
-      developer.log(
-        'logout success, session cleared',
-        name: 'AuthRemoteDataSource',
-      );
     } finally {
       // نمسح الجلسة المحلية دائماً لضمان إنهاء دخول المستخدم حتى لو فشل
       // إدراج الرمز في القائمة السوداء (انقطاع شبكة أو رمز منتهي الصلاحية).

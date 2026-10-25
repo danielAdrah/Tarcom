@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer' as developer;
 
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -46,12 +45,7 @@ class ApiClient {
     required T Function(http.Response) handle,
   }) async {
     try {
-      developer.log('$logLabel -> $endpoint', name: 'ApiClient');
       var response = await send().timeout(const Duration(seconds: 30));
-      developer.log(
-        '$logLabel <- ${response.statusCode} ${response.body}',
-        name: 'ApiClient',
-      );
 
       // اعتراض 401: حدّث رمز الوصول مرة واحدة ثم أعد الطلب الأصلي بهيدر جديد.
       if (response.statusCode == 401 &&
@@ -61,10 +55,6 @@ class ApiClient {
         if (refreshed) {
           // تُعاد تهيئة الترويسات داخل send() فيُقرأ رمز الوصول الجديد.
           response = await send().timeout(const Duration(seconds: 30));
-          developer.log(
-            '$logLabel RETRY <- ${response.statusCode} ${response.body}',
-            name: 'ApiClient',
-          );
         } else {
           onAuthFailure?.call();
         }
@@ -72,30 +62,12 @@ class ApiClient {
 
       return handle(response);
     } on TimeoutException {
-      developer.log('$logLabel timeout: $endpoint', name: 'ApiClient');
       throw const TimeoutException();
-    } on ApiException catch (e) {
-      developer.log(
-        '$logLabel ApiException: $endpoint -> $e',
-        name: 'ApiClient',
-        error: e,
-      );
+    } on ApiException {
       rethrow;
-    } on http.ClientException catch (e, s) {
-      developer.log(
-        '$logLabel ClientException: $endpoint',
-        name: 'ApiClient',
-        error: e,
-        stackTrace: s,
-      );
+    } on http.ClientException {
       throw const NetworkException();
-    } catch (e, s) {
-      developer.log(
-        '$logLabel UNEXPECTED: $endpoint [${e.runtimeType}]',
-        name: 'ApiClient',
-        error: e,
-        stackTrace: s,
-      );
+    } catch (e) {
       throw UnknownApiException(
         message: 'حدث خطأ غير متوقع. [${e.runtimeType}]',
       );
@@ -109,13 +81,7 @@ class ApiClient {
       _isRefreshing = true;
       try {
         return await onTokenRefresh!.call();
-      } catch (e, s) {
-        developer.log(
-          'token refresh failed',
-          name: 'ApiClient',
-          error: e,
-          stackTrace: s,
-        );
+      } catch (_) {
         return false;
       } finally {
         _isRefreshing = false;

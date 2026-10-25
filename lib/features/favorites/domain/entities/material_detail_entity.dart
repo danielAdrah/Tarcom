@@ -7,12 +7,25 @@ class MaterialDetailEntity {
   final String name;
   final double consumerPrice;
   final double supplierPrice;
+
+  /// السعر بالليرة السورية للمورد والمستهلك (`supplier_price_in_sp`/`customer_price_in_sp`).
+  final double supplierPriceInSp;
+  final double customerPriceInSp;
   final bool isActive;
   final String? image1;
   final int? category;
   final String categoryName;
   final int? uom;
   final String uomName;
+
+  /// وصف المادة (`description`) كما يرسله الـ API؛ قد يكون فارغاً.
+  final String description;
+
+  /// رابط معلوماتي اختياري (`info_url`) يفتح في المتصفح.
+  final String? infoUrl;
+
+  /// ملف معلوماتي اختياري (`info_file`): PDF أو صورة، حسب الامتداد.
+  final String? infoFile;
   final String? specKey1;
   final String? specKey2;
   final String? specKey3;
@@ -29,12 +42,17 @@ class MaterialDetailEntity {
     required this.name,
     required this.consumerPrice,
     required this.supplierPrice,
+    this.supplierPriceInSp = 0,
+    this.customerPriceInSp = 0,
     required this.isActive,
     required this.image1,
     required this.category,
     required this.categoryName,
     required this.uom,
     required this.uomName,
+    this.description = '',
+    this.infoUrl,
+    this.infoFile,
     this.specKey1,
     this.specKey2,
     this.specKey3,
@@ -78,4 +96,25 @@ class MaterialDetailEntity {
       consumerPrice == consumerPrice.roundToDouble()
       ? consumerPrice.toStringAsFixed(0)
       : consumerPrice.toStringAsFixed(2);
+
+  /// سعر المستهلك بالليرة السورية بصيغة نصية مع فواصل الآلاف (مثل 28,000).
+  String get customerPriceInSpLabel => _formatWithThousands(customerPriceInSp);
+
+  /// إدراج فواصل الآلاف في رقم نصي: "28000" -> "28,000".
+  static String _formatWithThousands(double value) {
+    final rounded = value.roundToDouble();
+    final isWhole = value == rounded;
+    final digits = isWhole
+        ? rounded.toStringAsFixed(0)
+        : value.toStringAsFixed(2);
+
+    final parts = digits.split('.');
+    final intPart = parts[0];
+    final buffer = StringBuffer();
+    for (var i = 0; i < intPart.length; i++) {
+      if (i > 0 && (intPart.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(intPart[i]);
+    }
+    return parts.length > 1 ? '$buffer.${parts[1]}' : buffer.toString();
+  }
 }

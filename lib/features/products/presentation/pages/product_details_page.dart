@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/routes/route_imports.dart';
@@ -18,7 +19,10 @@ class ProductDetailsArgs {
     required this.desc,
     required this.category,
     this.materialId,
+    this.priceInSp = '',
     this.specifications = const [],
+    this.infoUrl,
+    this.infoFile,
   });
 
   final String name;
@@ -28,7 +32,12 @@ class ProductDetailsArgs {
   final String category;
   // معرّف المادة المستخدم لتبديل المفضلة. قد يكون غائباً في المسارات القديمة.
   final int? materialId;
+  // سعر المستهلك بالليرة السورية نصياً (مثل "25,200")؛ قد يغيب في المسارات القديمة.
+  final String priceInSp;
   final List<MapEntry<String, String>> specifications;
+  // رابط/ملف المعلومات الاختياريان القادمان من الـ API؛ قد يغيبان في المسارات القديمة.
+  final String? infoUrl;
+  final String? infoFile;
 }
 
 class ProductDetailsPage extends StatelessWidget {
@@ -40,6 +49,9 @@ class ProductDetailsPage extends StatelessWidget {
     required this.proDesc,
     required this.proCategory,
     this.materialId,
+    this.proPriceInSp = '',
+    this.infoUrl,
+    this.infoFile,
     this.specifications = const [
       MapEntry('المعالج', 'Core i5 13 H'),
       MapEntry('الرام', '16G DDR5'),
@@ -56,6 +68,10 @@ class ProductDetailsPage extends StatelessWidget {
   final String proDesc;
   final String proCategory;
   final int? materialId;
+  final String proPriceInSp;
+  // رابط معلوماتي (info_url) وملف معلوماتي (info_file) اختياريان.
+  final String? infoUrl;
+  final String? infoFile;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +85,9 @@ class ProductDetailsPage extends StatelessWidget {
       proDesc: proDesc,
       proCategory: proCategory,
       materialId: materialId,
+      proPriceInSp: proPriceInSp,
+      infoUrl: infoUrl,
+      infoFile: infoFile,
       specifications: specifications,
     );
   }
@@ -82,7 +101,10 @@ class _ProductDetailsView extends StatefulWidget {
     required this.proDesc,
     required this.proCategory,
     required this.materialId,
+    required this.proPriceInSp,
     required this.specifications,
+    this.infoUrl,
+    this.infoFile,
   });
 
   final List<MapEntry<String, String>> specifications;
@@ -92,6 +114,9 @@ class _ProductDetailsView extends StatefulWidget {
   final String proDesc;
   final String proCategory;
   final int? materialId;
+  final String proPriceInSp;
+  final String? infoUrl;
+  final String? infoFile;
 
   @override
   State<_ProductDetailsView> createState() => _ProductDetailsViewState();
@@ -211,7 +236,8 @@ class _ProductDetailsViewState extends State<_ProductDetailsView> {
                           ),
                         SizedBox(height: 10.h),
                         //product price
-                        if (widget.proPrice.isNotEmpty)
+                        if (widget.proPrice.isNotEmpty ||
+                            widget.proPriceInSp.isNotEmpty)
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 16.w,
@@ -236,24 +262,70 @@ class _ProductDetailsViewState extends State<_ProductDetailsView> {
                                 ),
                               ],
                             ),
-                            child: Row(
+                            child: Column(
                               mainAxisSize: MainAxisSize.min,
-                              textDirection: TextDirection.rtl,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  Icons.sell_outlined,
-                                  color: AppColors.secondary,
-                                  size: 22.r,
-                                ),
-                                SizedBox(width: 10.w),
-                                Text(
-                                  '${widget.proPrice}\$',
-                                  textDirection: TextDirection.rtl,
-                                  style: textTheme.headlineMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.secondary,
+                                if (widget.proPrice.isNotEmpty)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    textDirection: TextDirection.rtl,
+                                    children: [
+                                      Icon(
+                                        Icons.sell_outlined,
+                                        color: AppColors.secondary,
+                                        size: 22.r,
+                                      ),
+                                      SizedBox(width: 10.w),
+                                      Text(
+                                        '${widget.proPrice}\$',
+                                        textDirection: TextDirection.rtl,
+                                        style: textTheme.headlineMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.secondary,
+                                            ),
+                                      ),
+                                    ],
                                   ),
-                                ),
+                                // السعر بالليرة السورية (customer_price_in_sp) أسفل سعر الدولار.
+                                if (widget.proPriceInSp.isNotEmpty) ...[
+                                  if (widget.proPrice.isNotEmpty) ...[
+                                    SizedBox(height: 10.h),
+                                    Divider(
+                                      height: 1.h,
+                                      color: AppColors.divider,
+                                    ),
+                                    SizedBox(height: 10.h),
+                                  ],
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    textDirection: TextDirection.rtl,
+                                    children: [
+                                      Icon(
+                                        Icons.currency_lira_rounded,
+                                        color: AppColors.primary,
+                                        size: 18.r,
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        '${widget.proPriceInSp} ل.س',
+                                        textDirection: TextDirection.rtl,
+                                        style: textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                      SizedBox(width: 2),
+                                      Text(
+                                        '(السعر بالليرة)',
+                                        style: textTheme.labelSmall?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -301,6 +373,18 @@ class _ProductDetailsViewState extends State<_ProductDetailsView> {
                     ),
                   ),
                 ),
+
+                // قسم المعلومات الإضافية: يظهر فقط عند وجود info_url أو info_file.
+                if (_hasAdditionalInfo)
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10.h,
+                      horizontal: 10.w,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: _buildAdditionalInfo(context),
+                    ),
+                  ),
 
                 // زر المفضلة: يبدّل حالة حفظ المنتج عبر [FavoritesBloc].
                 SliverToBoxAdapter(
@@ -419,6 +503,288 @@ class _ProductDetailsViewState extends State<_ProductDetailsView> {
       Icons.image_not_supported_outlined,
       size: 42.r,
       color: AppColors.textSecondary,
+    );
+  }
+
+  // ---------------------- المعلومات الإضافية (info_url / info_file) ----------------------
+
+  static const _imageExtensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'};
+
+  /// هل تتوفر معلومات إضافية لعرضها؟ (رابط أو ملف غير فارغين)
+  bool get _hasAdditionalInfo => _hasInfoUrl || _hasInfoFile;
+
+  bool get _hasInfoUrl => (widget.infoUrl?.trim().isNotEmpty ?? false);
+
+  bool get _hasInfoFile => (widget.infoFile?.trim().isNotEmpty ?? false);
+
+  /// استخراج الامتداد السفلي لمسار الرابط مع تجاهل السلسلة الاستعلامية.
+  String _extensionOf(String url) {
+    try {
+      final path = Uri.parse(url).path;
+      final dot = path.lastIndexOf('.');
+      return dot == -1 ? '' : path.substring(dot + 1).toLowerCase();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// هل ملف المعلومات صورة؟ (نعم إن كان الامتداد ضمن الصور المعروفة)
+  bool get _infoFileIsImage =>
+      _imageExtensions.contains(_extensionOf(widget.infoFile ?? ''));
+
+  /// فتح رابط في التطبيق الخارجي (المتصفح)، مع رسالة خطأ عند الفشل.
+  Future<void> _openUrl(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.isAbsolute) return;
+
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      _showInfoSnack(context, 'تعذّر فتح الرابط على هذا الجهاز.');
+    }
+  }
+
+  void _showInfoSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(12.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+        ),
+      );
+  }
+
+  /// معاينة صورة المعلومات بالحجم الكامل عند النقر.
+  void _showFullImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => _imageShimmerPlaceholder(),
+                  errorWidget: (context, url, error) => _imageFallback(),
+                ),
+              ),
+            ),
+            PositionedDirectional(
+              top: 12,
+              end: 12,
+              child: IconButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// يبني حاوية المعلومات الإضافية بأسلوب مطابق لحاوية المواصفات.
+  Widget _buildAdditionalInfo(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 16.r,
+            offset: Offset(0, 5.h),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Container(
+                width: 38.w,
+                height: 38.h,
+                decoration: BoxDecoration(
+                  color: AppColors.blue50,
+                  borderRadius: BorderRadius.circular(11.r),
+                ),
+                child: Icon(
+                  Icons.info_outline_rounded,
+                  color: AppColors.primary,
+                  size: 20.r,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  'معلومات إضافية',
+                  textDirection: TextDirection.rtl,
+                  style: textTheme.titleMedium?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          if (_hasInfoUrl) _buildInfoUrlTile(context, textTheme),
+          if (_hasInfoFile) ...[
+            if (_hasInfoUrl) Divider(height: 20.h, color: AppColors.divider),
+            _buildInfoFileTile(context, textTheme),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// بلاطة فتح رابط المعلومات في المتصفح.
+  Widget _buildInfoUrlTile(BuildContext context, TextTheme textTheme) {
+    final url = widget.infoUrl!;
+    return InkWell(
+      onTap: () => _openUrl(context, url),
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.blue50,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          textDirection: TextDirection.rtl,
+          children: [
+            Icon(Icons.link_rounded, color: AppColors.primary, size: 20.r),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'للمزيد من المعلومات افتح هذا الرابط',
+                    textDirection: TextDirection.rtl,
+                    style: textTheme.titleSmall?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    url,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textDirection: TextDirection.ltr,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Icon(
+              Icons.open_in_new_rounded,
+              color: AppColors.primary,
+              size: 18.r,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoFileTile(BuildContext context, TextTheme textTheme) {
+    final file = widget.infoFile!;
+
+    if (_infoFileIsImage) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Icon(Icons.image_outlined, color: AppColors.primary, size: 20.r),
+              SizedBox(width: 10.w),
+              Text(
+                'صورة معلوماتية',
+                textDirection: TextDirection.rtl,
+                style: textTheme.titleSmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          InkWell(
+            onTap: () => _showFullImage(context, file),
+            borderRadius: BorderRadius.circular(12.r),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: CachedNetworkImage(
+                imageUrl: file,
+                height: 220.h,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                placeholder: (context, url) => _imageShimmerPlaceholder(),
+                errorWidget: (context, url, error) => _imageFallback(),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // PDF أو نوع غير معروف: نعرض الملف عبر التطبيق الخارجي (المتصفح/قارئ PDF)
+    // ما يتيح مشاهدته وتنزيله دون الحاجة إلى FileProvider أو حزم إضافية.
+    return InkWell(
+      onTap: () => _openUrl(context, file),
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.orange50,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          textDirection: TextDirection.rtl,
+          children: [
+            Icon(
+              Icons.picture_as_pdf_rounded,
+              color: AppColors.orange800,
+              size: 22.r,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                'عرض / تنزيل الملف (PDF)',
+                textDirection: TextDirection.rtl,
+                style: textTheme.titleSmall?.copyWith(
+                  color: AppColors.orange800,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.download_rounded,
+              color: AppColors.orange800,
+              size: 18.r,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

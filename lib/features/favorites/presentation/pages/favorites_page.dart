@@ -271,16 +271,19 @@ class _FavoriteProductCardState extends State<_FavoriteProductCard> {
       onTap: () {
         // تمرير بيانات المنتج المضغوط عليه إلى صفحة التفاصيل.
         // المواصفات تُقرأ من `material_detail` عبر الـ getter `specs`،
-        // بينما الوصف النصي غير متوفر في استجابة المفضلة فيُترك فارغاً.
+        // والوصف والسعر بالليرة ورابط/ملف المعلومات صارت متوفرة في الاستجابة الجديدة.
         context.push(
           NavPaths.withinBranch(context, NavPaths.details),
           extra: ProductDetailsArgs(
             name: detail.name,
             price: detail.consumerPriceLabel,
             image: detail.image ?? '',
-            desc: '',
+            desc: detail.description,
             category: detail.categoryName,
             materialId: detail.id,
+            priceInSp: detail.customerPriceInSpLabel,
+            infoUrl: detail.infoUrl,
+            infoFile: detail.infoFile,
             specifications: detail.specs
                 .map((s) => MapEntry(s.key, s.value))
                 .toList(),

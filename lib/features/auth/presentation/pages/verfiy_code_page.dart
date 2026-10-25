@@ -31,8 +31,6 @@ class _VerfiyCodePageState extends State<VerfiyCodePage> {
       body: BlocConsumer<VerifyOtpBloc, VerifyOtpState>(
         listener: (context, state) {
           if (state is VerifyOtpSuccess) {
-            print('Verification successful: ${state.response}');
-
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -47,7 +45,6 @@ class _VerfiyCodePageState extends State<VerfiyCodePage> {
             context.goNamed('signInPage');
           }
           if (state is VerifyOtpFailure) {
-            print('Verification failed: ${state.message}');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('فشل التحقق: ${state.message}'),
@@ -113,8 +110,6 @@ class _VerfiyCodePageState extends State<VerfiyCodePage> {
                                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    print('${int.parse(codeTextField.text)}');
-                                    print(widget.email);
                                     context.read<VerifyOtpBloc>().add(
                                       VerifyOtpSubmitted(
                                         email: widget.email,

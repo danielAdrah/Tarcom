@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
 
 import 'package:get_storage/get_storage.dart';
 
@@ -33,13 +32,8 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       if (decoded is Map<String, dynamic>) {
         return UserProfileModel.fromJson(decoded);
       }
-    } catch (e, s) {
-      developer.log(
-        'ProfileLocalDataSource decode failed',
-        name: 'ProfileCache',
-        error: e,
-        stackTrace: s,
-      );
+    } catch (_) {
+      // decode failed — return null to fall back to network.
     }
 
     return null;

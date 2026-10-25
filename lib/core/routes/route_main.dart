@@ -59,6 +59,9 @@ Widget _buildDetails(BuildContext context, GoRouterState state) {
       proDesc: extra.desc,
       proCategory: extra.category,
       materialId: extra.materialId,
+      proPriceInSp: extra.priceInSp,
+      infoUrl: extra.infoUrl,
+      infoFile: extra.infoFile,
       specifications: extra.specifications,
     );
   }
