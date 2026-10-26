@@ -147,7 +147,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         delay: Duration(milliseconds: 400),
                         child: Center(
                           child: Image.asset(
-                            "assets/img/logo.png",
+                            "assets/img/logo.webp",
                             // height: height * 0.4,
                             width: width * 0.3,
                           ),

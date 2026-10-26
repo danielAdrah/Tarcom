@@ -292,7 +292,7 @@ class _HomeView extends StatelessWidget {
               child: FadeInUp(
                 delay: Duration(milliseconds: 900),
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(15.r, 0, 15.r, 10.h),
+                  padding: EdgeInsets.fromLTRB(15.r, 0, 15.r, 25.h),
                   child: InkWell(
                     onTap: () {
                       context.push(
@@ -309,13 +309,21 @@ class _HomeView extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 20.w,
-                            color: AppColors.primary,
-                          ),
+
+                        Row(
+                          children: [
+                            Text(
+                              "اضغط لرؤية المزيد",
+                              style: textTheme.bodySmall?.copyWith(
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 20.w,
+                              color: AppColors.primary,
+                            ),
+                          ],
                         ),
                       ],
                     ),

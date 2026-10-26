@@ -33,7 +33,6 @@ class _SignInPageState extends State<SignInPage> {
             // =====================================================
 
             if (state is SignInSuccess) {
-
               // ScaffoldMessenger.of(context).showSnackBar(
               //   SnackBar(
               //     content: Text(state.response.message),
@@ -85,7 +84,7 @@ class _SignInPageState extends State<SignInPage> {
                         delay: Duration(milliseconds: 400),
                         child: Center(
                           child: Image.asset(
-                            "assets/img/logo.png",
+                            "assets/img/logo.webp",
                             // height: height * 0.4,
                             width: width * 0.3,
                           ),

@@ -70,7 +70,7 @@ class _NoInternetPageState extends State<NoInternetPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/img/bg.png', fit: BoxFit.cover),
+            child: Image.asset('assets/img/bg.webp', fit: BoxFit.cover),
           ),
           Center(
             child: Padding(

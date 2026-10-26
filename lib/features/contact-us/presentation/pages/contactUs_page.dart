@@ -107,7 +107,7 @@ class _ContactusViewState extends State<_ContactusView> {
                         ],
                         borderRadius: BorderRadius.circular(15.r),
                         image: const DecorationImage(
-                          image: AssetImage('assets/img/contactusbanner.png'),
+                          image: AssetImage('assets/img/contactusbanner.webp'),
                           fit: BoxFit.fill,
                         ),
                       ),
@@ -220,7 +220,7 @@ class LocationTile extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15.r),
             ),
-            child: Image.asset('assets/img/location.jpg', fit: BoxFit.cover),
+            child: Image.asset('assets/img/location.webp', fit: BoxFit.cover),
           ),
           SizedBox(height: 5.h),
           Row(

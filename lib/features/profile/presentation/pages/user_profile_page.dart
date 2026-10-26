@@ -227,7 +227,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                             background: ZoomIn(
                               delay: const Duration(milliseconds: 350),
                               child: Image.asset(
-                                'assets/img/profilebanner.png',
+                                'assets/img/profilebanner.webp',
                                 fit: BoxFit.cover,
                               ),
                             ),

@@ -49,7 +49,7 @@ class _LoadingPageState extends State<LoadingPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/img/bg.png', fit: BoxFit.cover),
+            child: Image.asset('assets/img/bg.webp', fit: BoxFit.cover),
           ),
           Center(
             child: Column(
@@ -58,7 +58,7 @@ class _LoadingPageState extends State<LoadingPage> {
                 ZoomIn(
                   delay: Duration(milliseconds: 600),
                   child: Image.asset(
-                    "assets/img/logo.png",
+                    "assets/img/logo.webp",
                     // height: height * 0.4,
                     width: width * 0.4,
                   ),

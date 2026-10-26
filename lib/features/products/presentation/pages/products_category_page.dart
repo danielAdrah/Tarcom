@@ -48,7 +48,7 @@ class _ProductsCategoryView extends StatelessWidget {
                   background: ZoomIn(
                     delay: const Duration(milliseconds: 350),
                     child: Image.asset(
-                      'assets/img/products_banner.png',
+                      'assets/img/products_banner.webp',
                       fit: BoxFit.cover,
                     ),
                   ),

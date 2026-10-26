@@ -67,7 +67,7 @@ class _VerfiyCodePageState extends State<VerfiyCodePage> {
                       children: [
                         SizedBox(height: 50.h),
                         Image.asset(
-                          'assets/img/verfiy.png',
+                          'assets/img/verfiy.webp',
                           width: 300.w,
                           // height: 250.h,
                           fit: BoxFit.cover,

@@ -9,7 +9,7 @@ class AppBackground extends StatelessWidget {
   const AppBackground({
     super.key,
     this.child,
-    this.imagePath = 'assets/img/bg.png',
+    this.imagePath = 'assets/img/bg.webp',
   });
 
   @override
